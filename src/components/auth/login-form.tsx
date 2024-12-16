@@ -11,6 +11,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export function LoginForm() {
     const [username, setUsername] = useState('');
@@ -100,18 +101,14 @@ export function LoginForm() {
                     <Button type='submit' className='w-full'>
                         Sign In
                     </Button>
-                    <div className='text-center'>
-                        <p className='text-sm text-muted-foreground'>
-                            Don&apos;t have an account?
-                        </p>
-                        <Button
-                            type='button'
-                            variant='link'
-                            className='text-sm'
-                            onClick={() => router.push('/signup')}
+                    <div className='text-center text-sm text-gunmetal'>
+                        Don&apos;t have an account?{' '}
+                        <Link
+                            href='/signup'
+                            className='underline underline-offset-4'
                         >
-                            Create an account
-                        </Button>
+                            Sign up
+                        </Link>
                     </div>
                 </form>
             </CardContent>
