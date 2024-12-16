@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 
 export function LoginForm() {
@@ -64,8 +70,11 @@ export function LoginForm() {
         <Card className='w-[350px]'>
             <CardHeader>
                 <CardTitle className='text-2xl font-bold text-center text-gunmetal'>
-                    Log In
+                    Welcome back
                 </CardTitle>
+                <CardDescription className='text-center text-sm'>
+                    Enter your Pawmodoro account details below.
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className='space-y-4'>
@@ -91,6 +100,19 @@ export function LoginForm() {
                     <Button type='submit' className='w-full'>
                         Sign In
                     </Button>
+                    <div className='text-center'>
+                        <p className='text-sm text-muted-foreground'>
+                            Don&apos;t have an account?
+                        </p>
+                        <Button
+                            type='button'
+                            variant='link'
+                            className='text-sm'
+                            onClick={() => router.push('/signup')}
+                        >
+                            Create an account
+                        </Button>
+                    </div>
                 </form>
             </CardContent>
         </Card>
