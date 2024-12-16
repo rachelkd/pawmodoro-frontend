@@ -32,6 +32,13 @@ export function LoginForm() {
             const data = await response.json();
 
             if (!response.ok) {
+                if (response.status === 400) {
+                    const firstErrorMessage = Object.values(data)[0];
+                    if (typeof firstErrorMessage === 'string') {
+                        throw new Error(firstErrorMessage);
+                    }
+                    throw new Error('Validation failed');
+                }
                 throw new Error(data.message || 'Login failed');
             }
 
