@@ -46,7 +46,7 @@ export function LoginForm() {
                 localStorage.setItem('token', data.token);
             }
 
-            router.push('/dashboard');
+            router.push('/');
         } catch (error: unknown) {
             if (error instanceof Error) {
                 setError(error.message);
@@ -63,7 +63,7 @@ export function LoginForm() {
     return (
         <Card className='w-[350px]'>
             <CardHeader>
-                <CardTitle className='text-2xl font-bold text-center'>
+                <CardTitle className='text-2xl font-bold text-center text-gunmetal'>
                     Log In
                 </CardTitle>
             </CardHeader>
