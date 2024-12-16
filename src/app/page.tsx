@@ -5,10 +5,10 @@ import {
     SkipBack,
     Play,
     SkipForward,
-    User2,
     LineChart,
     Settings,
 } from 'lucide-react';
+import { UserProfile } from '@/components/profile/UserProfile';
 
 export default function Home() {
     return (
@@ -16,13 +16,7 @@ export default function Home() {
             {/* Header */}
             <header className='p-6 flex justify-between items-center'>
                 <h1 className='text-white/90 text-xl font-medium'>pawmodoro</h1>
-                <Button
-                    variant='ghost'
-                    size='icon'
-                    className='text-white/80 hover:bg-white/30 h-14 w-14'
-                >
-                    <User2 className='h-8 w-8' />
-                </Button>
+                <UserProfile />
             </header>
 
             {/* Main Timer */}

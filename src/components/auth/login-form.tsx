@@ -12,12 +12,14 @@ import {
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const router = useRouter();
+    const { setUser } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,7 +52,13 @@ export function LoginForm() {
             }
 
             if (data.token) {
+                const userData = {
+                    username: data.username,
+                    token: data.token,
+                };
                 localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(userData));
+                setUser(userData);
             }
 
             router.push('/');
