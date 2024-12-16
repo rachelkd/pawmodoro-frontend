@@ -1,8 +1,11 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
+import { Bricolage_Grotesque } from 'next/font/google';
 import type { Metadata } from 'next';
 
-const inter = Inter({ subsets: ['latin'] });
+const bricolage = Bricolage_Grotesque({
+    subsets: ['latin'],
+    display: 'swap',
+});
 
 export const metadata: Metadata = {
     title: 'Pawmodoro',
@@ -16,7 +19,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang='en'>
-            <body className={inter.className}>{children}</body>
+            <body className={bricolage.className}>{children}</body>
         </html>
     );
 }
