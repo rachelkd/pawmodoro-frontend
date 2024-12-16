@@ -18,6 +18,11 @@ const config: Config = {
     extend: {
       colors: {
         sage: '#5A7D7C',
+        frenchGray: 'hsl(251, 12%, 73%)',
+        powderBlue: 'hsl(200, 35%, 72%)',
+        gunmetal: 'hsl(206, 19%, 17%)',
+        lavender: 'hsl(230, 64%, 91%)',
+        hookersGreen: 'hsl(178, 16%, 42%)',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
