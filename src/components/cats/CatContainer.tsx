@@ -1,6 +1,7 @@
 import { Cat } from '@/interfaces/Cat';
 import { CatCard } from './CatCard';
 import { useEffect, useState, useRef } from 'react';
+import { CatStatsModal } from './CatStatsModal';
 
 interface CatContainerProps {
     cats: Cat[];
@@ -14,6 +15,7 @@ interface Position {
 export const CatContainer = ({ cats }: CatContainerProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [positions, setPositions] = useState<Position[]>([]);
+    const [selectedCat, setSelectedCat] = useState<Cat | null>(null);
     const CAT_WIDTH = 100; // Width of cat in pixels
 
     useEffect(() => {
@@ -55,27 +57,44 @@ export const CatContainer = ({ cats }: CatContainerProps) => {
         return () => clearInterval(animationInterval);
     }, [cats]);
 
+    const handleCatClick = (cat: Cat) => {
+        setSelectedCat(cat);
+    };
+
     return (
-        <div
-            ref={containerRef}
-            className='relative w-full h-[200px] rounded-lg overflow-hidden bg-sage-dark/10'
-        >
-            {cats.map((cat, index) => (
-                <div
-                    key={cat.name}
-                    className='absolute top-1/2 -translate-y-1/2'
-                    style={{
-                        left: `${positions[index]?.x ?? 0}px`, // Using pixels instead of percentage
-                    }}
-                >
-                    <CatCard
-                        cat={cat}
-                        direction={
-                            positions[index]?.velocityX > 0 ? 'left' : 'right'
-                        }
-                    />
-                </div>
-            ))}
-        </div>
+        <>
+            <div
+                ref={containerRef}
+                className='relative w-full h-[200px] rounded-lg overflow-hidden bg-sage-dark/10'
+            >
+                {cats.map((cat, index) => (
+                    <div
+                        key={cat.name}
+                        className='absolute top-1/2 -translate-y-1/2'
+                        style={{
+                            left: `${positions[index]?.x ?? 0}px`, // Using pixels instead of percentage
+                        }}
+                    >
+                        <CatCard
+                            cat={cat}
+                            direction={
+                                positions[index]?.velocityX > 0
+                                    ? 'left'
+                                    : 'right'
+                            }
+                            onClick={() => handleCatClick(cat)}
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {selectedCat && (
+                <CatStatsModal
+                    cat={selectedCat}
+                    isOpen={!!selectedCat}
+                    onClose={() => setSelectedCat(null)}
+                />
+            )}
+        </>
     );
 };

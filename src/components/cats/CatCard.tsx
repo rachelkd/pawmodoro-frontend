@@ -3,24 +3,26 @@ import Image from 'next/image';
 
 interface CatCardProps {
     cat: Cat;
-    direction?: 'left' | 'right';
+    direction: 'left' | 'right';
+    onClick: () => void;
 }
 
-export const CatCard = ({ cat, direction = 'right' }: CatCardProps) => {
+export const CatCard = ({ cat, direction, onClick }: CatCardProps) => {
     return (
-        <div className='relative'>
-            <div className={direction === 'left' ? 'scale-x-[-1]' : ''}>
-                <Image
-                    src={`/cats/${cat.imageFileName}`}
-                    alt={cat.name}
-                    width={96}
-                    height={96}
-                    className='object-cover rounded-full select-none'
-                    unoptimized
-                    draggable={false}
-                    priority
-                />
-            </div>
-        </div>
+        <button
+            className='cursor-pointer transition-transform hover:scale-110 bg-transparent border-0 p-0'
+            onClick={onClick}
+        >
+            <Image
+                src={`/cats/${cat.imageFileName}`}
+                alt={cat.name}
+                width={100}
+                height={100}
+                className={`${direction === 'left' ? 'scale-x-[-1]' : ''}`}
+                unoptimized
+                draggable={false}
+                priority
+            />
+        </button>
     );
 };
