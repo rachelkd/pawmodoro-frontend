@@ -9,6 +9,7 @@ import { Footer } from '@/components/timer/Footer';
 import { CatContainer } from '@/components/cats/CatContainer';
 import { Cat } from '@/interfaces/Cat';
 import { fetchUserCats } from '@/services/catService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const FOCUS_TIME = 25 * 60; // 25 minutes in seconds
 const SHORT_BREAK = 5 * 60; // 5 minutes in seconds
@@ -28,31 +29,31 @@ export default function Home() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [cats, setCats] = useState<Cat[]>([DEFAULT_CAT]);
     const [error, setError] = useState<string | null>(null);
+    const { user } = useAuth();
 
     useEffect(() => {
         setMounted(true);
-        const token = localStorage.getItem('token');
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : null;
-        const username = user?.username;
-
-        // Only fetch user's cats if they're logged in
-        if (token && username) {
-            const loadCats = async () => {
-                try {
-                    const response = await fetchUserCats(username);
-                    setCats(response.cats);
-                } catch (err) {
-                    setError('Failed to load cats');
-                    console.error(err);
-                    // Fallback to default cat if there's an error
-                    setCats([DEFAULT_CAT]);
-                }
-            };
-
-            loadCats();
-        }
     }, []);
+
+    useEffect(() => {
+        const loadCats = async () => {
+            if (!user?.username) {
+                setCats([DEFAULT_CAT]);
+                return;
+            }
+
+            try {
+                const response = await fetchUserCats(user.username);
+                setCats(response.cats);
+            } catch (err) {
+                setError('Failed to load cats');
+                console.error(err);
+                setCats([DEFAULT_CAT]);
+            }
+        };
+
+        loadCats();
+    }, [user]);
 
     const getCurrentSessionTime = () => {
         if (currentSession === 3) {
