@@ -6,7 +6,7 @@ import { Timer } from '@/components/timer/Timer';
 import { SessionIndicator } from '@/components/timer/SessionIndicator';
 import { Controls } from '@/components/timer/Controls';
 import { Footer } from '@/components/timer/Footer';
-import { CatGrid } from '@/components/cats/CatGrid';
+import { CatContainer } from '@/components/cats/CatContainer';
 import { Cat } from '@/interfaces/Cat';
 import { fetchUserCats } from '@/services/catService';
 
@@ -84,23 +84,25 @@ export default function Home() {
             <Header isPlaying={isPlaying} />
 
             <main className='flex-1 flex flex-col items-center justify-center gap-8'>
-                <Timer
-                    isPlaying={isPlaying}
-                    initialTime={getCurrentSessionTime()}
-                    onComplete={handleNext}
-                />
-                <SessionIndicator currentSession={currentSession} />
-                <Controls
-                    isPlaying={isPlaying}
-                    onPlayPause={handlePlayPause}
-                    onNext={handleNext}
-                    onPrevious={handlePrevious}
-                />
+                <div className='flex flex-col items-center justify-center gap-6 mb-16'>
+                    <Timer
+                        isPlaying={isPlaying}
+                        initialTime={getCurrentSessionTime()}
+                        onComplete={handleNext}
+                    />
+                    <SessionIndicator currentSession={currentSession} />
+                    <Controls
+                        isPlaying={isPlaying}
+                        onPlayPause={handlePlayPause}
+                        onNext={handleNext}
+                        onPrevious={handlePrevious}
+                    />
+                </div>
 
                 {error && <div className='text-red-500 mt-4'>{error}</div>}
 
-                <div className='w-full max-w-5xl mx-auto px-4'>
-                    <CatGrid cats={cats} />
+                <div className='w-full max-w-5xl px-4 sm:px-6 md:px-8'>
+                    <CatContainer cats={cats} />
                 </div>
             </main>
 
