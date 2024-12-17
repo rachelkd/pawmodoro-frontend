@@ -11,7 +11,7 @@ export function UserProfile() {
 
     const handleLogout = () => {
         logout();
-        router.push('/login');
+        router.push('/');
     };
 
     // Don't render anything while loading to prevent hydration mismatch
@@ -23,7 +23,11 @@ export function UserProfile() {
         return (
             <div className='flex items-center gap-4 p-4'>
                 <Link href='/login'>
-                    <Button variant='outline' size='sm' className='text-white'>
+                    <Button
+                        variant='outline'
+                        size='default'
+                        className='text-white'
+                    >
                         Log in
                     </Button>
                 </Link>
@@ -34,9 +38,9 @@ export function UserProfile() {
     return (
         <div className='flex items-center gap-4 p-4 text-white'>
             <div>
-                <p className='text-sm font-medium'>Welcome, {user.username}!</p>
+                <p className='text-md font-medium'>Welcome, {user.username}!</p>
             </div>
-            <Button variant='outline' size='sm' onClick={handleLogout}>
+            <Button variant='outline' size='default' onClick={handleLogout}>
                 Logout
             </Button>
         </div>

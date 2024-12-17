@@ -1,9 +1,13 @@
 import { SignupForm } from '@/components/auth/signup-form';
+import { Header } from '@/components/timer/Header';
 
 export default function SignupPage() {
     return (
-        <main className='flex min-h-screen flex-col items-center justify-center p-24'>
-            <SignupForm />
-        </main>
+        <div className='min-h-screen flex flex-col'>
+            <Header showUserProfile={false} />
+            <div className='flex-1 flex items-center justify-center p-24'>
+                <SignupForm />
+            </div>
+        </div>
     );
 }

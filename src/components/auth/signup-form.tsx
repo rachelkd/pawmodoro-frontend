@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 export function SignupForm() {
     const [formData, setFormData] = useState({
@@ -221,7 +222,14 @@ export function SignupForm() {
                         className='w-full'
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Creating account...' : 'Sign Up'}
+                        {isLoading ? (
+                            <>
+                                <Loader2 className='animate-spin' />
+                                Creating account...
+                            </>
+                        ) : (
+                            'Sign Up'
+                        )}
                     </Button>
                     <div className='text-center text-sm text-gunmetal'>
                         Already have an account?{' '}
