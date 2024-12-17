@@ -83,26 +83,29 @@ export default function Home() {
         <div className='min-h-screen bg-sage flex flex-col'>
             <Header isPlaying={isPlaying} />
 
-            <main className='flex-1 flex flex-col items-center justify-center gap-8'>
-                <div className='flex flex-col items-center justify-center gap-6 mb-16'>
-                    <Timer
-                        isPlaying={isPlaying}
-                        initialTime={getCurrentSessionTime()}
-                        onComplete={handleNext}
-                    />
-                    <SessionIndicator currentSession={currentSession} />
-                    <Controls
-                        isPlaying={isPlaying}
-                        onPlayPause={handlePlayPause}
-                        onNext={handleNext}
-                        onPrevious={handlePrevious}
-                    />
+            <main className='flex-1 flex flex-col items-center justify-start gap-8 py-12'>
+                <div className='flex-1 flex items-center justify-center w-full'>
+                    <div className='flex flex-col items-center justify-center gap-6'>
+                        <Timer
+                            isPlaying={isPlaying}
+                            initialTime={getCurrentSessionTime()}
+                            onComplete={handleNext}
+                        />
+                        <SessionIndicator currentSession={currentSession} />
+                        <Controls
+                            isPlaying={isPlaying}
+                            onPlayPause={handlePlayPause}
+                            onNext={handleNext}
+                            onPrevious={handlePrevious}
+                        />
+                    </div>
                 </div>
 
-                {error && <div className='text-red-500 mt-4'>{error}</div>}
-
-                <div className='w-full max-w-5xl px-4 sm:px-6 md:px-8'>
-                    <CatContainer cats={cats} />
+                <div className='w-full flex flex-col items-center'>
+                    {error && <div className='text-red-500 mb-8'>{error}</div>}
+                    <div className='w-full max-w-5xl px-4'>
+                        <CatContainer cats={cats} />
+                    </div>
                 </div>
             </main>
 
