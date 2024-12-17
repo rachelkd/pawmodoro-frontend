@@ -15,6 +15,8 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export function SignupForm() {
     const [formData, setFormData] = useState({
         username: '',
@@ -63,17 +65,14 @@ export function SignupForm() {
     };
 
     const handleLogin = async (username: string, password: string) => {
-        const loginResponse = await fetch(
-            'http://localhost:8080/api/users/login',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ username, password }),
-            }
-        );
+        const loginResponse = await fetch(`${API_URL}/api/users/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ username, password }),
+        });
 
         if (!loginResponse.ok) {
             throw new Error('Auto-login failed after signup');
@@ -95,16 +94,13 @@ export function SignupForm() {
 
         try {
             // 1. Sign up
-            const signupResponse = await fetch(
-                'http://localhost:8080/api/users/signup',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                }
-            );
+            const signupResponse = await fetch(`${API_URL}/api/users/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
 
             const signupData = await signupResponse.json();
 
