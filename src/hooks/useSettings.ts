@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from '@/constants/storage';
 import { useState, useCallback } from 'react';
 
 interface Settings {
@@ -24,13 +25,12 @@ const DEFAULT_SETTINGS: Settings = {
     autoStartFocus: false,
 };
 
-const STORAGE_KEY = 'pawmodoro_settings';
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Helper function to get settings from localStorage
 const getStoredSettings = (): Settings => {
     try {
-        const storedSettings = localStorage.getItem(STORAGE_KEY);
+        const storedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
         if (storedSettings) {
             return JSON.parse(storedSettings);
         }
@@ -48,7 +48,7 @@ export function useSettings(username?: string): UseSettingsReturn {
 
     // Get the user data from localStorage
     const getUserData = () => {
-        const userData = localStorage.getItem('user');
+        const userData = localStorage.getItem(STORAGE_KEYS.USER);
         if (!userData) return null;
         return JSON.parse(userData);
     };
@@ -70,17 +70,17 @@ export function useSettings(username?: string): UseSettingsReturn {
 
         // For logged-in users, remove local settings and load from backend
         try {
-            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
             setIsLoading(true);
 
             const userData = getUserData();
-            if (!userData?.token) {
+            if (!userData?.accessToken) {
                 throw new Error('No authentication token found');
             }
 
             const response = await fetch(`${API_URL}/api/settings/${username}`, {
                 headers: {
-                    Authorization: `Bearer ${userData.token}`,
+                    Authorization: `Bearer ${userData.accessToken}`,
                 },
             });
 
@@ -104,7 +104,7 @@ export function useSettings(username?: string): UseSettingsReturn {
         // For non-logged-in users, save to localStorage
         if (!username) {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
                 setSettings(newSettings);
             } catch (err) {
                 console.error('Failed to save settings to localStorage:', err);
@@ -115,9 +115,9 @@ export function useSettings(username?: string): UseSettingsReturn {
 
         // For logged-in users, remove local settings and save to backend
         try {
-            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
             const userData = getUserData();
-            if (!userData?.token) {
+            if (!userData?.accessToken) {
                 throw new Error('No authentication token found');
             }
 
@@ -125,7 +125,7 @@ export function useSettings(username?: string): UseSettingsReturn {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${userData.token}`,
+                    Authorization: `Bearer ${userData.accessToken}`,
                 },
                 body: JSON.stringify(newSettings),
             });

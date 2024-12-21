@@ -50,14 +50,15 @@ export function LoginForm() {
                 throw new Error(data.message || 'Login failed');
             }
 
-            if (data.token) {
+            if (data.accessToken && data.refreshToken) {
                 const userData = {
                     username: data.username,
-                    token: data.token,
+                    accessToken: data.accessToken,
+                    refreshToken: data.refreshToken,
                 };
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(userData));
                 setUser(userData);
+            } else {
+                throw new Error('Invalid response from server');
             }
 
             router.push('/');

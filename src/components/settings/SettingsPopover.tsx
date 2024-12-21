@@ -8,7 +8,6 @@ import { Loader2 } from 'lucide-react';
 import { CustomPopover } from '@/components/ui/custom/popover/CustomPopover';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSettings } from '@/hooks/useSettings';
 import * as React from 'react';
 
 interface SettingsPopoverProps {
