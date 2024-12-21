@@ -17,7 +17,6 @@ const config: Config = {
     },
     extend: {
       colors: {
-        sage: '#5A7D7C',
         frenchGray: 'hsl(251, 12%, 73%)',
         powderBlue: 'hsl(200, 35%, 72%)',
         gunmetal: 'hsl(206, 19%, 17%)',

@@ -125,7 +125,6 @@ export function SettingsPopover({
             trigger={trigger}
             side='top'
             align='start'
-            contentClassName='bg-white/10 backdrop-blur-md border-white/20'
             open={isOpen}
             onOpenChange={handleOpenChange}
         >
@@ -152,7 +151,6 @@ export function SettingsPopover({
                                         focusDuration: value,
                                     }))
                                 }
-                                className='[&_[role=slider]]:bg-white'
                             />
                         </div>
                         <div className='space-y-2'>
@@ -172,7 +170,6 @@ export function SettingsPopover({
                                         shortBreakDuration: value,
                                     }))
                                 }
-                                className='[&_[role=slider]]:bg-white'
                             />
                         </div>
                         <div className='space-y-2'>
@@ -192,7 +189,6 @@ export function SettingsPopover({
                                         longBreakDuration: value,
                                     }))
                                 }
-                                className='[&_[role=slider]]:bg-white'
                             />
                         </div>
                     </div>
@@ -218,7 +214,6 @@ export function SettingsPopover({
                                         autoStartBreaks: value,
                                     }))
                                 }
-                                className='data-[state=checked]:bg-white data-[state=checked]:text-black'
                             />
                         </div>
                         <div className='flex items-center justify-between'>
@@ -237,7 +232,6 @@ export function SettingsPopover({
                                         autoStartFocus: value,
                                     }))
                                 }
-                                className='data-[state=checked]:bg-white data-[state=checked]:text-black'
                             />
                         </div>
                     </div>
@@ -246,7 +240,7 @@ export function SettingsPopover({
                     <Button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className='w-full bg-white text-black hover:bg-white/90'
+                        className='w-full bg-gunmetal text-white'
                     >
                         {isSaving ? (
                             <>
