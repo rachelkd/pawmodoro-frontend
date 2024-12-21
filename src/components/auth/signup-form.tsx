@@ -127,6 +127,8 @@ export function SignupForm() {
                     username: loginData.username,
                     accessToken: loginData.accessToken,
                     refreshToken: loginData.refreshToken,
+                    expiresIn: loginData.expiresIn,
+                    expiresAt: loginData.expiresAt,
                 };
                 setUser(userData);
             } else {

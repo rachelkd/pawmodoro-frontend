@@ -17,20 +17,9 @@ import {
 } from 'react';
 import { STORAGE_KEYS } from '@/constants/storage';
 import { useRouter } from 'next/navigation';
+import { User } from '@/interfaces/User';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-// Refresh 5 minutes before expiry
-const TOKEN_REFRESH_THRESHOLD = 5 * 60;
-
-/**
- * Represents the authenticated user's data
- */
-interface User {
-    username: string;
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-}
 
 /**
  * Type definition for the Authentication Context
@@ -157,7 +146,9 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
         const now = Date.now() / 1000; // Convert to seconds
         const timeUntilExpiry = user.expiresAt - now;
-        const refreshIn = (timeUntilExpiry - TOKEN_REFRESH_THRESHOLD) * 1000; // Convert to milliseconds
+        // Refresh when 20% of the token's lifetime remains
+        const refreshThreshold = user.expiresIn * 0.2;
+        const refreshIn = (timeUntilExpiry - refreshThreshold) * 1000; // Convert to milliseconds
 
         if (refreshIn <= 0) {
             // Token is already expired or about to expire, refresh immediately
@@ -171,7 +162,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
         }, refreshIn);
 
         return () => clearTimeout(refreshTimeout);
-    }, [user?.expiresAt, refreshTokens]);
+    }, [user?.expiresAt, user?.expiresIn, refreshTokens]);
 
     useEffect(() => {
         // Load user data from localStorage on component mount

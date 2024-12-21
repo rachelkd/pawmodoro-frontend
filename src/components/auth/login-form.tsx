@@ -58,6 +58,8 @@ export function LoginForm() {
                     username: data.username,
                     accessToken: data.accessToken,
                     refreshToken: data.refreshToken,
+                    expiresIn: data.expiresIn,
+                    expiresAt: data.expiresAt,
                 };
                 setUser(userData);
             } else {
