@@ -106,7 +106,7 @@ export function LoginForm() {
                     </div>
                     {error && <p className='text-red-500 text-sm'>{error}</p>}
                     <Button type='submit' className='w-full'>
-                        Sign In
+                        Log In
                     </Button>
                     <div className='text-center text-sm text-gunmetal'>
                         Don&apos;t have an account?{' '}
