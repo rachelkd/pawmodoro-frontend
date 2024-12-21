@@ -30,7 +30,7 @@ export function Footer({
         loadSettings().catch(() => {
             toast({
                 title: 'Error',
-                description: error || 'Failed to load settings',
+                description: error ?? 'Failed to load settings',
                 variant: 'destructive',
             });
         });
