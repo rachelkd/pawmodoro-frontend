@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 interface Settings {
     focusDuration: number;
@@ -12,7 +12,8 @@ interface UseSettingsReturn {
     settings: Settings;
     isLoading: boolean;
     error: string | null;
-    updateSettings: (key: keyof Settings, value: Settings[keyof Settings]) => Promise<void>;
+    saveSettings: (newSettings: Settings) => Promise<void>;
+    loadSettings: () => Promise<void>;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -23,11 +24,26 @@ const DEFAULT_SETTINGS: Settings = {
     autoStartFocus: false,
 };
 
+const STORAGE_KEY = 'pawmodoro_settings';
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Helper function to get settings from localStorage
+const getStoredSettings = (): Settings => {
+    try {
+        const storedSettings = localStorage.getItem(STORAGE_KEY);
+        if (storedSettings) {
+            return JSON.parse(storedSettings);
+        }
+    } catch (err) {
+        console.error('Failed to load settings from localStorage:', err);
+    }
+    return DEFAULT_SETTINGS;
+};
+
 export function useSettings(username?: string): UseSettingsReturn {
-    const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-    const [isLoading, setIsLoading] = useState(false); // Start with false for anonymous users
+    // Initialize with stored settings or defaults
+    const [settings, setSettings] = useState<Settings>(() => getStoredSettings());
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Get the user data from localStorage
@@ -37,99 +53,89 @@ export function useSettings(username?: string): UseSettingsReturn {
         return JSON.parse(userData);
     };
 
-    useEffect(() => {
-        // Skip API calls if no username is provided (anonymous user)
+    const loadSettings = useCallback(async () => {
+        setError(null);
+
+        // For non-logged-in users, load from localStorage
         if (!username) {
-            setIsLoading(false);
-            setError(null);
+            try {
+                const storedSettings = getStoredSettings();
+                setSettings(storedSettings);
+            } catch (err) {
+                console.error('Failed to load settings from localStorage:', err);
+                setSettings(DEFAULT_SETTINGS);
+            }
             return;
         }
 
-        async function fetchSettings() {
-            try {
-                setIsLoading(true);
-                setError(null);
-
-                const userData = getUserData();
-                if (!userData?.token) {
-                    throw new Error('No authentication token found');
-                }
-
-                const response = await fetch(`${API_URL}/api/settings/${username}`, {
-                    headers: {
-                        Authorization: `Bearer ${userData.token}`,
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch settings');
-                }
-
-                const data = await response.json();
-                setSettings(data);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'An error occurred');
-                // Keep using default settings on error
-                setSettings(DEFAULT_SETTINGS);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        fetchSettings();
-    }, [username]);
-
-    const updateSettings = async (
-        key: keyof Settings,
-        value: Settings[keyof Settings]
-    ): Promise<void> => {
+        // For logged-in users, load from backend
         try {
-            setError(null);
-            
-            // For anonymous users or errors, just update local state
-            if (!username) {
-                setSettings((prev) => ({
-                    ...prev,
-                    [key]: value,
-                }));
-                return;
-            }
+            setIsLoading(true);
 
             const userData = getUserData();
             if (!userData?.token) {
                 throw new Error('No authentication token found');
             }
 
-            // Optimistically update the UI
-            setSettings((prev) => ({
-                ...prev,
-                [key]: value,
-            }));
+            const response = await fetch(`${API_URL}/api/settings/${username}`, {
+                headers: {
+                    Authorization: `Bearer ${userData.token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch settings');
+            }
+
+            const data = await response.json();
+            setSettings(data);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
+            setSettings(DEFAULT_SETTINGS);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [username]);
+
+    const saveSettings = async (newSettings: Settings): Promise<void> => {
+        setError(null);
+        
+        // For non-logged-in users, save to localStorage
+        if (!username) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+                setSettings(newSettings);
+            } catch (err) {
+                console.error('Failed to save settings to localStorage:', err);
+                throw new Error('Failed to save settings');
+            }
+            return;
+        }
+
+        // For logged-in users, save to backend
+        try {
+            const userData = getUserData();
+            if (!userData?.token) {
+                throw new Error('No authentication token found');
+            }
 
             const response = await fetch(`${API_URL}/api/settings/${username}`, {
-                method: 'PATCH',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${userData.token}`,
                 },
-                body: JSON.stringify({ [key]: value }),
+                body: JSON.stringify(newSettings),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update settings');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update settings');
             }
 
-            const updatedSettings = await response.json();
-            setSettings(updatedSettings);
+            const responseData = await response.json();
+            setSettings(responseData);
         } catch (err) {
-            // For anonymous users, keep the local state update
-            if (!username) return;
-
-            // For authenticated users, revert on error
-            setSettings((prev) => ({
-                ...prev,
-                [key]: settings[key],
-            }));
             setError(err instanceof Error ? err.message : 'An error occurred');
             throw err;
         }
@@ -139,6 +145,7 @@ export function useSettings(username?: string): UseSettingsReturn {
         settings,
         isLoading,
         error,
-        updateSettings,
+        saveSettings,
+        loadSettings,
     };
 } 

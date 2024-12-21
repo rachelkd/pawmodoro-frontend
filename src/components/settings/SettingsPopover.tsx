@@ -1,7 +1,15 @@
+'use client';
+
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { CustomPopover } from '@/components/ui/custom/popover/CustomPopover';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/hooks/useSettings';
+import * as React from 'react';
 
 interface SettingsPopoverProps {
     readonly trigger: React.ReactNode;
@@ -10,26 +18,90 @@ interface SettingsPopoverProps {
     readonly longBreakDuration: number;
     readonly autoStartBreaks: boolean;
     readonly autoStartFocus: boolean;
-    readonly onFocusDurationChange: (value: number) => void;
-    readonly onShortBreakDurationChange: (value: number) => void;
-    readonly onLongBreakDurationChange: (value: number) => void;
-    readonly onAutoStartBreaksChange: (value: boolean) => void;
-    readonly onAutoStartFocusChange: (value: boolean) => void;
+    readonly onSaveSettings: (settings: {
+        focusDuration: number;
+        shortBreakDuration: number;
+        longBreakDuration: number;
+        autoStartBreaks: boolean;
+        autoStartFocus: boolean;
+    }) => Promise<void>;
 }
 
 export function SettingsPopover({
     trigger,
-    focusDuration,
-    shortBreakDuration,
-    longBreakDuration,
-    autoStartBreaks,
-    autoStartFocus,
-    onFocusDurationChange,
-    onShortBreakDurationChange,
-    onLongBreakDurationChange,
-    onAutoStartBreaksChange,
-    onAutoStartFocusChange,
+    focusDuration: initialFocusDuration,
+    shortBreakDuration: initialShortBreakDuration,
+    longBreakDuration: initialLongBreakDuration,
+    autoStartBreaks: initialAutoStartBreaks,
+    autoStartFocus: initialAutoStartFocus,
+    onSaveSettings,
 }: SettingsPopoverProps) {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = React.useState(false);
+
+    // Local state for form values
+    const [localSettings, setLocalSettings] = React.useState({
+        focusDuration: initialFocusDuration,
+        shortBreakDuration: initialShortBreakDuration,
+        longBreakDuration: initialLongBreakDuration,
+        autoStartBreaks: initialAutoStartBreaks,
+        autoStartFocus: initialAutoStartFocus,
+    });
+
+    // Update local settings when parent settings change
+    React.useEffect(() => {
+        setLocalSettings({
+            focusDuration: initialFocusDuration,
+            shortBreakDuration: initialShortBreakDuration,
+            longBreakDuration: initialLongBreakDuration,
+            autoStartBreaks: initialAutoStartBreaks,
+            autoStartFocus: initialAutoStartFocus,
+        });
+    }, [
+        initialFocusDuration,
+        initialShortBreakDuration,
+        initialLongBreakDuration,
+        initialAutoStartBreaks,
+        initialAutoStartFocus,
+    ]);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await onSaveSettings(localSettings);
+
+            toast({
+                title: user?.username
+                    ? 'Settings saved'
+                    : 'Settings saved locally',
+                description: user?.username
+                    ? 'Your settings have been updated successfully'
+                    : 'Log in to sync settings across devices',
+            });
+        } catch (error) {
+            // Revert local settings on error
+            setLocalSettings({
+                focusDuration: initialFocusDuration,
+                shortBreakDuration: initialShortBreakDuration,
+                longBreakDuration: initialLongBreakDuration,
+                autoStartBreaks: initialAutoStartBreaks,
+                autoStartFocus: initialAutoStartFocus,
+            });
+
+            toast({
+                title: 'Error',
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : 'Failed to save settings',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <CustomPopover
             trigger={trigger}
@@ -45,49 +117,60 @@ export function SettingsPopover({
                     <div className='space-y-4'>
                         <div className='space-y-2'>
                             <Label htmlFor='focus' className='text-white'>
-                                Focus Duration: {focusDuration} minutes
+                                Focus Duration: {localSettings.focusDuration}{' '}
+                                minutes
                             </Label>
                             <Slider
                                 id='focus'
                                 min={1}
                                 max={60}
                                 step={1}
-                                value={[focusDuration]}
+                                value={[localSettings.focusDuration]}
                                 onValueChange={([value]) =>
-                                    onFocusDurationChange(value)
+                                    setLocalSettings((prev) => ({
+                                        ...prev,
+                                        focusDuration: value,
+                                    }))
                                 }
                                 className='[&_[role=slider]]:bg-white'
                             />
                         </div>
                         <div className='space-y-2'>
                             <Label htmlFor='shortBreak' className='text-white'>
-                                Short Break Duration: {shortBreakDuration}{' '}
-                                minutes
+                                Short Break Duration:{' '}
+                                {localSettings.shortBreakDuration} minutes
                             </Label>
                             <Slider
                                 id='shortBreak'
                                 min={1}
                                 max={15}
                                 step={1}
-                                value={[shortBreakDuration]}
+                                value={[localSettings.shortBreakDuration]}
                                 onValueChange={([value]) =>
-                                    onShortBreakDurationChange(value)
+                                    setLocalSettings((prev) => ({
+                                        ...prev,
+                                        shortBreakDuration: value,
+                                    }))
                                 }
                                 className='[&_[role=slider]]:bg-white'
                             />
                         </div>
                         <div className='space-y-2'>
                             <Label htmlFor='longBreak' className='text-white'>
-                                Long Break Duration: {longBreakDuration} minutes
+                                Long Break Duration:{' '}
+                                {localSettings.longBreakDuration} minutes
                             </Label>
                             <Slider
                                 id='longBreak'
                                 min={1}
                                 max={30}
                                 step={1}
-                                value={[longBreakDuration]}
+                                value={[localSettings.longBreakDuration]}
                                 onValueChange={([value]) =>
-                                    onLongBreakDurationChange(value)
+                                    setLocalSettings((prev) => ({
+                                        ...prev,
+                                        longBreakDuration: value,
+                                    }))
                                 }
                                 className='[&_[role=slider]]:bg-white'
                             />
@@ -108,8 +191,13 @@ export function SettingsPopover({
                             </Label>
                             <Switch
                                 id='autoStartBreaks'
-                                checked={autoStartBreaks}
-                                onCheckedChange={onAutoStartBreaksChange}
+                                checked={localSettings.autoStartBreaks}
+                                onCheckedChange={(value) =>
+                                    setLocalSettings((prev) => ({
+                                        ...prev,
+                                        autoStartBreaks: value,
+                                    }))
+                                }
                                 className='data-[state=checked]:bg-white data-[state=checked]:text-black'
                             />
                         </div>
@@ -122,12 +210,33 @@ export function SettingsPopover({
                             </Label>
                             <Switch
                                 id='autoStartFocus'
-                                checked={autoStartFocus}
-                                onCheckedChange={onAutoStartFocusChange}
+                                checked={localSettings.autoStartFocus}
+                                onCheckedChange={(value) =>
+                                    setLocalSettings((prev) => ({
+                                        ...prev,
+                                        autoStartFocus: value,
+                                    }))
+                                }
                                 className='data-[state=checked]:bg-white data-[state=checked]:text-black'
                             />
                         </div>
                     </div>
+                </div>
+                <div className='pt-2'>
+                    <Button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className='w-full bg-white text-black hover:bg-white/90'
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                Saving...
+                            </>
+                        ) : (
+                            'Save Settings'
+                        )}
+                    </Button>
                 </div>
             </div>
         </CustomPopover>

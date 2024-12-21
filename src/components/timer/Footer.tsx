@@ -6,6 +6,7 @@ import { Package, LineChart, Settings } from 'lucide-react';
 import { SettingsPopover } from '@/components/settings/SettingsPopover';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui';
+import * as React from 'react';
 
 interface FooterProps {
     readonly username?: string;
@@ -20,24 +21,20 @@ export function Footer({
     onStatsClick,
     onInventoryClick,
 }: FooterProps) {
-    const { settings, isLoading, error, updateSettings } =
+    const { settings, isLoading, error, saveSettings, loadSettings } =
         useSettings(username);
     const { toast } = useToast();
 
-    const handleSettingChange = async <K extends keyof typeof settings>(
-        key: K,
-        value: (typeof settings)[K]
-    ) => {
-        try {
-            await updateSettings(key, value);
-        } catch {
+    // Load settings on mount
+    React.useEffect(() => {
+        loadSettings().catch(() => {
             toast({
                 title: 'Error',
-                description: error || 'Failed to update settings',
+                description: error || 'Failed to load settings',
                 variant: 'destructive',
             });
-        }
-    };
+        });
+    }, [loadSettings, toast, error]);
 
     return (
         <footer className='p-6 flex justify-between'>
@@ -54,21 +51,7 @@ export function Footer({
                         </Button>
                     }
                     {...settings}
-                    onFocusDurationChange={(value) =>
-                        handleSettingChange('focusDuration', value)
-                    }
-                    onShortBreakDurationChange={(value) =>
-                        handleSettingChange('shortBreakDuration', value)
-                    }
-                    onLongBreakDurationChange={(value) =>
-                        handleSettingChange('longBreakDuration', value)
-                    }
-                    onAutoStartBreaksChange={(value) =>
-                        handleSettingChange('autoStartBreaks', value)
-                    }
-                    onAutoStartFocusChange={(value) =>
-                        handleSettingChange('autoStartFocus', value)
-                    }
+                    onSaveSettings={saveSettings}
                 />
                 <Button
                     variant='ghost'
