@@ -13,8 +13,11 @@ import {
     useEffect,
     ReactNode,
     useMemo,
+    useCallback,
 } from 'react';
 import { STORAGE_KEYS } from '@/constants/storage';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
  * Represents the authenticated user's data
@@ -31,11 +34,34 @@ interface User {
 interface AuthContextType {
     user: User | null;
     setUser: (user: User | null) => void;
-    logout: () => void;
+    logout: () => Promise<void>;
     isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/**
+ * Makes a request to the backend to logout the user
+ * @param accessToken The user's access token
+ */
+async function logoutFromBackend(accessToken: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_URL}/api/users/logout`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Logout failed');
+        }
+    } catch (error) {
+        console.error('Error during logout:', error);
+        throw error;
+    }
+}
 
 /**
  * AuthProvider component that wraps the application and provides authentication context
@@ -64,16 +90,25 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
         }
     }, [user]);
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem(STORAGE_KEYS.USER);
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-    };
+    const logout = useCallback(async () => {
+        try {
+            if (user?.accessToken) {
+                await logoutFromBackend(user.accessToken);
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+        } finally {
+            // Clear local state even if backend logout fails
+            setUser(null);
+            localStorage.removeItem(STORAGE_KEYS.USER);
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        }
+    }, [user]);
 
     const value = useMemo(
         () => ({ user, setUser, logout, isLoading }),
-        [user, isLoading]
+        [user, isLoading, logout]
     );
 
     return (
