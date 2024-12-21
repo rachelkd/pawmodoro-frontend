@@ -16,6 +16,7 @@ import {
     useCallback,
 } from 'react';
 import { STORAGE_KEYS } from '@/constants/storage';
+import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 // Refresh 5 minutes before expiry
@@ -107,6 +108,25 @@ async function refreshTokensFromBackend(refreshToken: string): Promise<{
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
+
+    const logout = useCallback(async () => {
+        try {
+            if (user?.accessToken) {
+                await logoutFromBackend(user.accessToken);
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+        } finally {
+            // Clear local state even if backend logout fails
+            setUser(null);
+            localStorage.removeItem(STORAGE_KEYS.USER);
+            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            // Redirect to login page
+            router.push('/login');
+        }
+    }, [user, router]);
 
     // Function to refresh tokens
     const refreshTokens = useCallback(async () => {
@@ -129,7 +149,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
             // If refresh fails, log out the user
             await logout();
         }
-    }, [user?.refreshToken]);
+    }, [user?.refreshToken, logout]);
 
     // Set up automatic token refresh
     useEffect(() => {
@@ -168,22 +188,6 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
             localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, user.accessToken);
             localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, user.refreshToken);
-        }
-    }, [user]);
-
-    const logout = useCallback(async () => {
-        try {
-            if (user?.accessToken) {
-                await logoutFromBackend(user.accessToken);
-            }
-        } catch (error) {
-            console.error('Error during logout:', error);
-        } finally {
-            // Clear local state even if backend logout fails
-            setUser(null);
-            localStorage.removeItem(STORAGE_KEYS.USER);
-            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         }
     }, [user]);
 

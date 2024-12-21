@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { CustomPopover } from '@/components/ui/custom/popover/CustomPopover';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -36,7 +37,7 @@ export function SettingsPopover({
     autoStartFocus: initialAutoStartFocus,
     onSaveSettings,
 }: SettingsPopoverProps) {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
 
@@ -96,6 +97,7 @@ export function SettingsPopover({
                 description: user?.username
                     ? 'Your settings have been updated successfully'
                     : 'Log in to sync settings across devices',
+                variant: 'default',
             });
 
             // Close the popover after successful save
@@ -110,14 +112,34 @@ export function SettingsPopover({
                 autoStartFocus: initialAutoStartFocus,
             });
 
-            toast({
-                title: 'Error',
-                description:
-                    error instanceof Error
-                        ? error.message
-                        : 'Failed to save settings',
-                variant: 'destructive',
-            });
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to save settings';
+
+            // Show error toast with sign out action if it's an auth error
+            if (errorMessage.includes('Authentication failed')) {
+                toast({
+                    title: 'Authentication Error',
+                    description:
+                        'Your session has expired. Please sign out and log in again.',
+                    variant: 'destructive',
+                    action: (
+                        <ToastAction
+                            altText='Sign out'
+                            onClick={() => logout?.()}
+                        >
+                            Sign out
+                        </ToastAction>
+                    ),
+                });
+            } else {
+                toast({
+                    title: 'Error',
+                    description: errorMessage,
+                    variant: 'destructive',
+                });
+            }
         } finally {
             setIsSaving(false);
         }

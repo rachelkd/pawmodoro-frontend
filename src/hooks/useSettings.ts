@@ -26,6 +26,8 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
 // Helper function to get settings from localStorage
 const getStoredSettings = (): Settings => {
@@ -36,9 +38,13 @@ const getStoredSettings = (): Settings => {
         }
     } catch (err) {
         console.error('Failed to load settings from localStorage:', err);
+        throw err;
     }
     return DEFAULT_SETTINGS;
 };
+
+// Helper function to delay execution
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export function useSettings(username?: string): UseSettingsReturn {
     // Initialize with stored settings or defaults
@@ -53,26 +59,8 @@ export function useSettings(username?: string): UseSettingsReturn {
         return JSON.parse(userData);
     };
 
-    const loadSettings = useCallback(async () => {
-        setError(null);
-
-        // For non-logged-in users, load from localStorage
-        if (!username) {
-            try {
-                const storedSettings = getStoredSettings();
-                setSettings(storedSettings);
-            } catch (err) {
-                console.error('Failed to load settings from localStorage:', err);
-                setSettings(DEFAULT_SETTINGS);
-            }
-            return;
-        }
-
-        // For logged-in users, remove local settings and load from backend
+    const fetchSettingsWithRetry = useCallback(async (retryCount = 0): Promise<Settings> => {
         try {
-            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
-            setIsLoading(true);
-
             const userData = getUserData();
             if (!userData?.accessToken) {
                 throw new Error('No authentication token found');
@@ -84,19 +72,61 @@ export function useSettings(username?: string): UseSettingsReturn {
                 },
             });
 
+            if (response.status === 401) {
+                throw new Error('Authentication failed - please sign out and log in again');
+            }
+
             if (!response.ok) {
                 throw new Error('Failed to fetch settings');
             }
 
-            const data = await response.json();
+            return await response.json();
+        } catch (err) {
+            if (retryCount < MAX_RETRIES) {
+                await delay(RETRY_DELAY * (retryCount + 1));
+                return fetchSettingsWithRetry(retryCount + 1);
+            }
+            throw err;
+        }
+    }, [username]);
+
+    const loadSettings = useCallback(async () => {
+        setError(null);
+
+        // For non-logged-in users, load from localStorage
+        if (!username) {
+            try {
+                const storedSettings = getStoredSettings();
+                setSettings(storedSettings);
+            } catch (err) {
+                console.error('Failed to load settings from localStorage:', err);
+                setSettings(DEFAULT_SETTINGS);
+                throw new Error('Failed to load settings from localStorage');
+            }
+            return;
+        }
+
+        // For logged-in users, try to load from backend with retries
+        try {
+            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+            setIsLoading(true);
+
+            const data = await fetchSettingsWithRetry();
             setSettings(data);
         } catch (err) {
+            console.error('Failed to fetch settings after retries:', err);
             setError(err instanceof Error ? err.message : 'An error occurred');
-            setSettings(DEFAULT_SETTINGS);
+            
+            // Fall back to local storage or defaults
+            const fallbackSettings = getStoredSettings();
+            setSettings(fallbackSettings);
+            
+            // Re-throw the error after setting fallback
+            throw err;
         } finally {
             setIsLoading(false);
         }
-    }, [username]);
+    }, [username, fetchSettingsWithRetry]);
 
     const saveSettings = async (newSettings: Settings): Promise<void> => {
         setError(null);
@@ -129,6 +159,10 @@ export function useSettings(username?: string): UseSettingsReturn {
                 },
                 body: JSON.stringify(newSettings),
             });
+
+            if (response.status === 401) {
+                throw new Error('Authentication failed - please sign out and log in again');
+            }
 
             if (!response.ok) {
                 const errorData = await response.json();
