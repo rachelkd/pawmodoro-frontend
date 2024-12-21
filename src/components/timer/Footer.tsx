@@ -6,7 +6,7 @@ import { Package, LineChart, Settings } from 'lucide-react';
 import { SettingsPopover } from '@/components/settings/SettingsPopover';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui';
-import * as React from 'react';
+import { useEffect } from 'react';
 
 interface FooterProps {
     readonly username?: string;
@@ -26,7 +26,7 @@ export function Footer({
     const { toast } = useToast();
 
     // Load settings on mount
-    React.useEffect(() => {
+    useEffect(() => {
         loadSettings().catch(() => {
             toast({
                 title: 'Error',

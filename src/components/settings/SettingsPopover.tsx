@@ -8,10 +8,11 @@ import { Loader2 } from 'lucide-react';
 import { CustomPopover } from '@/components/ui/custom/popover/CustomPopover';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import * as React from 'react';
+import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 
 interface SettingsPopoverProps {
-    readonly trigger: React.ReactNode;
+    readonly trigger: ReactNode;
     readonly focusDuration: number;
     readonly shortBreakDuration: number;
     readonly longBreakDuration: number;
@@ -37,10 +38,10 @@ export function SettingsPopover({
 }: SettingsPopoverProps) {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [isSaving, setIsSaving] = React.useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Local state for form values
-    const [localSettings, setLocalSettings] = React.useState({
+    const [localSettings, setLocalSettings] = useState({
         focusDuration: initialFocusDuration,
         shortBreakDuration: initialShortBreakDuration,
         longBreakDuration: initialLongBreakDuration,
@@ -49,7 +50,7 @@ export function SettingsPopover({
     });
 
     // Add new state to track if popover is open
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     // Reset local settings when popover closes
     const handleOpenChange = (open: boolean) => {
@@ -67,7 +68,7 @@ export function SettingsPopover({
     };
 
     // Update local settings when parent settings change
-    React.useEffect(() => {
+    useEffect(() => {
         setLocalSettings({
             focusDuration: initialFocusDuration,
             shortBreakDuration: initialShortBreakDuration,
@@ -96,6 +97,9 @@ export function SettingsPopover({
                     ? 'Your settings have been updated successfully'
                     : 'Log in to sync settings across devices',
             });
+
+            // Close the popover after successful save
+            setIsOpen(false);
         } catch (error) {
             // Revert local settings on error
             setLocalSettings({

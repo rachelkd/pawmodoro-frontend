@@ -4,10 +4,11 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { ReactNode } from 'react';
 
 interface CustomPopoverProps {
-    readonly trigger: React.ReactNode;
-    readonly children: React.ReactNode;
+    readonly trigger: ReactNode;
+    readonly children: ReactNode;
     readonly side?: 'top' | 'right' | 'bottom' | 'left';
     readonly align?: 'start' | 'center' | 'end';
     readonly contentClassName?: string;

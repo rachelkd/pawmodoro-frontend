@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -20,12 +21,14 @@ export function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const { setUser } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
         try {
             const response = await fetch(`${API_URL}/api/users/login`, {
@@ -72,6 +75,8 @@ export function LoginForm() {
             } else {
                 setError('An unexpected error occurred. Please try again.');
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -106,8 +111,19 @@ export function LoginForm() {
                         />
                     </div>
                     {error && <p className='text-red-500 text-sm'>{error}</p>}
-                    <Button type='submit' className='w-full'>
-                        Log In
+                    <Button
+                        type='submit'
+                        className='w-full'
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                                Logging in...
+                            </>
+                        ) : (
+                            'Log In'
+                        )}
                     </Button>
                     <div className='text-center text-sm text-gunmetal'>
                         Don&apos;t have an account?{' '}
