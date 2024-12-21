@@ -16,12 +16,13 @@ export const CatContainer = ({ cats }: CatContainerProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [positions, setPositions] = useState<Position[]>([]);
     const [selectedCat, setSelectedCat] = useState<Cat | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const CAT_WIDTH = 100; // Width of cat in pixels
 
     useEffect(() => {
         const initialPositions = cats.map((_, index) => ({
             x: index * CAT_WIDTH,
-            velocityX: 1, // Using pixels per frame instead of percentage
+            velocityX: 1,
         }));
         setPositions(initialPositions);
 
@@ -36,7 +37,6 @@ export const CatContainer = ({ cats }: CatContainerProps) => {
                     let newX = pos.x + pos.velocityX;
                     let newVelocityX = pos.velocityX;
 
-                    // Bounce off the walls using pixel values
                     if (newX >= maxX) {
                         newX = maxX;
                         newVelocityX = -Math.abs(newVelocityX);
@@ -59,6 +59,7 @@ export const CatContainer = ({ cats }: CatContainerProps) => {
 
     const handleCatClick = (cat: Cat) => {
         setSelectedCat(cat);
+        setIsModalOpen(true);
     };
 
     return (
@@ -72,7 +73,7 @@ export const CatContainer = ({ cats }: CatContainerProps) => {
                         key={cat.name}
                         className='absolute top-1/2 -translate-y-1/2'
                         style={{
-                            left: `${positions[index]?.x ?? 0}px`, // Using pixels instead of percentage
+                            left: `${positions[index]?.x ?? 0}px`,
                         }}
                     >
                         <CatCard
@@ -91,8 +92,8 @@ export const CatContainer = ({ cats }: CatContainerProps) => {
             {selectedCat && (
                 <CatStatsModal
                     cat={selectedCat}
-                    isOpen={!!selectedCat}
-                    onClose={() => setSelectedCat(null)}
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
                 />
             )}
         </>
