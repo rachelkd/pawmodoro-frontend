@@ -122,9 +122,9 @@ export function SettingsPopover({
                             </Label>
                             <Slider
                                 id='focus'
-                                min={1}
-                                max={60}
-                                step={1}
+                                min={5}
+                                max={90}
+                                step={5}
                                 value={[localSettings.focusDuration]}
                                 onValueChange={([value]) =>
                                     setLocalSettings((prev) => ({
@@ -162,9 +162,9 @@ export function SettingsPopover({
                             </Label>
                             <Slider
                                 id='longBreak'
-                                min={1}
-                                max={30}
-                                step={1}
+                                min={5}
+                                max={40}
+                                step={5}
                                 value={[localSettings.longBreakDuration]}
                                 onValueChange={([value]) =>
                                     setLocalSettings((prev) => ({
