@@ -27,12 +27,114 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 interface AuthContextType {
     user: User | null;
     setUser: (user: User | null) => void;
+    login: (username: string, password: string) => Promise<void>;
+    signup: (
+        username: string,
+        email: string,
+        password: string,
+        confirmPassword: string
+    ) => Promise<void>;
     logout: () => Promise<void>;
     isLoading: boolean;
     refreshTokens: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/**
+ * Makes a request to login the user
+ * @param username The username
+ * @param password The password
+ * @returns The login response data
+ * @throws Error if login fails
+ */
+async function loginToBackend(
+    username: string,
+    password: string
+): Promise<{
+    username: string;
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    expiresAt: number;
+}> {
+    const response = await fetch(`${API_URL}/api/users/login`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        if (response.status === 400) {
+            const firstErrorMessage = Object.values(data)[0];
+            if (typeof firstErrorMessage === 'string') {
+                throw new Error(firstErrorMessage);
+            }
+            throw new Error('Validation failed');
+        }
+        throw new Error(data.message || 'Login failed');
+    }
+
+    if (!data.accessToken || !data.refreshToken) {
+        throw new Error('Invalid response from server');
+    }
+
+    return data;
+}
+
+/**
+ * Makes a request to signup a new user
+ * @param username The desired username
+ * @param email The user's email
+ * @param password The desired password
+ * @param confirmPassword Password confirmation
+ * @returns The signup response data
+ * @throws Error if signup fails
+ */
+async function signupToBackend(
+    username: string,
+    email: string,
+    password: string,
+    confirmPassword: string
+): Promise<{
+    username: string;
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    expiresAt: number;
+}> {
+    const response = await fetch(`${API_URL}/api/users/signup`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password, confirmPassword }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        if (response.status === 400) {
+            const firstErrorMessage = Object.values(data)[0];
+            if (typeof firstErrorMessage === 'string') {
+                throw new Error(firstErrorMessage);
+            }
+            throw new Error('Validation failed');
+        }
+        throw new Error(data.message || 'Signup failed');
+    }
+
+    if (!data.accessToken || !data.refreshToken) {
+        throw new Error('Invalid response from server');
+    }
+
+    return data;
+}
 
 /**
  * Makes a request to the backend to logout the user
@@ -98,6 +200,34 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
+
+    const login = useCallback(
+        async (username: string, password: string) => {
+            const data = await loginToBackend(username, password);
+            setUser(data);
+            router.push('/');
+        },
+        [router]
+    );
+
+    const signup = useCallback(
+        async (
+            username: string,
+            email: string,
+            password: string,
+            confirmPassword: string
+        ) => {
+            const data = await signupToBackend(
+                username,
+                email,
+                password,
+                confirmPassword
+            );
+            setUser(data);
+            router.push('/');
+        },
+        [router]
+    );
 
     const logout = useCallback(async () => {
         try {
@@ -183,8 +313,16 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     }, [user]);
 
     const value = useMemo(
-        () => ({ user, setUser, logout, isLoading, refreshTokens }),
-        [user, isLoading, logout, refreshTokens]
+        () => ({
+            user,
+            setUser,
+            login,
+            signup,
+            logout,
+            isLoading,
+            refreshTokens,
+        }),
+        [user, login, signup, logout, isLoading, refreshTokens]
     );
 
     return (

@@ -10,20 +10,16 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const { setUser } = useAuth();
+    const { login } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,42 +27,7 @@ export function LoginForm() {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${API_URL}/api/users/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ username, password }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 400) {
-                    const firstErrorMessage = Object.values(data)[0];
-                    if (typeof firstErrorMessage === 'string') {
-                        throw new Error(firstErrorMessage);
-                    }
-                    throw new Error('Validation failed');
-                }
-                throw new Error(data.message || 'Login failed');
-            }
-
-            if (data.accessToken && data.refreshToken) {
-                const userData = {
-                    username: data.username,
-                    accessToken: data.accessToken,
-                    refreshToken: data.refreshToken,
-                    expiresIn: data.expiresIn,
-                    expiresAt: data.expiresAt,
-                };
-                setUser(userData);
-            } else {
-                throw new Error('Invalid response from server');
-            }
-
-            router.push('/');
+            await login(username, password);
         } catch (error: unknown) {
             if (error instanceof Error) {
                 setError(error.message);

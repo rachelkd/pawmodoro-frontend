@@ -10,12 +10,9 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function SignupForm() {
     const [formData, setFormData] = useState({
@@ -26,8 +23,7 @@ export function SignupForm() {
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const { setUser } = useAuth();
+    const { signup } = useAuth();
 
     const validateForm = () => {
         // Username validation
@@ -64,24 +60,6 @@ export function SignupForm() {
         return true;
     };
 
-    const handleLogin = async (username: string, password: string) => {
-        const loginResponse = await fetch(`${API_URL}/api/users/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ username, password }),
-        });
-
-        if (!loginResponse.ok) {
-            throw new Error('Auto-login failed after signup');
-        }
-
-        const loginData = await loginResponse.json();
-        return loginData;
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -93,49 +71,12 @@ export function SignupForm() {
         }
 
         try {
-            // 1. Sign up
-            const signupResponse = await fetch(`${API_URL}/api/users/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            const signupData = await signupResponse.json();
-
-            if (!signupResponse.ok) {
-                if (signupResponse.status === 400) {
-                    const firstErrorMessage = Object.values(signupData)[0];
-                    if (typeof firstErrorMessage === 'string') {
-                        throw new Error(firstErrorMessage);
-                    }
-                    throw new Error('Validation failed');
-                }
-                throw new Error(signupData.message || 'Signup failed');
-            }
-
-            // 2. Auto login after successful signup
-            const loginData = await handleLogin(
+            await signup(
                 formData.username,
-                formData.password
+                formData.email,
+                formData.password,
+                formData.confirmPassword
             );
-
-            // 3. Set user data with new token structure
-            if (loginData.accessToken && loginData.refreshToken) {
-                const userData = {
-                    username: loginData.username,
-                    accessToken: loginData.accessToken,
-                    refreshToken: loginData.refreshToken,
-                    expiresIn: loginData.expiresIn,
-                    expiresAt: loginData.expiresAt,
-                };
-                setUser(userData);
-            } else {
-                throw new Error('Invalid response from server');
-            }
-
-            router.push('/');
         } catch (error: unknown) {
             if (error instanceof Error) {
                 setError(error.message);
