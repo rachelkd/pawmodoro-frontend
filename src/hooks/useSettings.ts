@@ -68,8 +68,9 @@ export function useSettings(username?: string): UseSettingsReturn {
             return;
         }
 
-        // For logged-in users, load from backend
+        // For logged-in users, remove local settings and load from backend
         try {
+            localStorage.removeItem(STORAGE_KEY);
             setIsLoading(true);
 
             const userData = getUserData();
@@ -112,8 +113,9 @@ export function useSettings(username?: string): UseSettingsReturn {
             return;
         }
 
-        // For logged-in users, save to backend
+        // For logged-in users, remove local settings and save to backend
         try {
+            localStorage.removeItem(STORAGE_KEY);
             const userData = getUserData();
             if (!userData?.token) {
                 throw new Error('No authentication token found');
