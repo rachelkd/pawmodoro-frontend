@@ -18,7 +18,9 @@ export const CatCard = ({ cat, direction, onClick }: CatCardProps) => {
                 alt={cat.name}
                 width={100}
                 height={100}
-                className={`${direction === 'left' ? 'scale-x-[-1]' : ''}`}
+                className={`${
+                    direction === 'left' ? 'scale-x-[-1]' : ''
+                } select-none`}
                 unoptimized
                 draggable={false}
                 priority
