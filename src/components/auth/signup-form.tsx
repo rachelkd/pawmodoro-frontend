@@ -227,13 +227,13 @@ export function SignupForm() {
                             'Sign Up'
                         )}
                     </Button>
-                    <div className='text-center text-sm text-gunmetal'>
+                    <div className='text-center text-sm'>
                         Already have an account?{' '}
                         <Link
                             href='/login'
                             className='underline underline-offset-4'
                         >
-                            Sign in
+                            Log in
                         </Link>
                     </div>
                 </form>
