@@ -18,6 +18,8 @@ import {
 import { STORAGE_KEYS } from '@/constants/storage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// Refresh 5 minutes before expiry
+const TOKEN_REFRESH_THRESHOLD = 5 * 60;
 
 /**
  * Represents the authenticated user's data
@@ -26,6 +28,7 @@ interface User {
     username: string;
     accessToken: string;
     refreshToken: string;
+    expiresAt: number;
 }
 
 /**
@@ -36,6 +39,7 @@ interface AuthContextType {
     setUser: (user: User | null) => void;
     logout: () => Promise<void>;
     isLoading: boolean;
+    refreshTokens: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,6 +68,38 @@ async function logoutFromBackend(accessToken: string): Promise<void> {
 }
 
 /**
+ * Makes a request to refresh the access and refresh tokens
+ * @param refreshToken The current refresh token
+ * @returns New access and refresh tokens with expiration info
+ */
+async function refreshTokensFromBackend(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    expiresAt: number;
+}> {
+    try {
+        const response = await fetch(`${API_URL}/api/users/refresh`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ refreshToken }),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Token refresh failed');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error during token refresh:', error);
+        throw error;
+    }
+}
+
+/**
  * AuthProvider component that wraps the application and provides authentication context
  * @param {Object} props - Component props
  * @param {ReactNode} props.children - Child components to be wrapped
@@ -71,6 +107,51 @@ async function logoutFromBackend(accessToken: string): Promise<void> {
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Function to refresh tokens
+    const refreshTokens = useCallback(async () => {
+        if (!user?.refreshToken) return;
+
+        try {
+            const newTokens = await refreshTokensFromBackend(user.refreshToken);
+            setUser((currentUser) =>
+                currentUser
+                    ? {
+                          ...currentUser,
+                          accessToken: newTokens.accessToken,
+                          refreshToken: newTokens.refreshToken,
+                          expiresAt: newTokens.expiresAt,
+                      }
+                    : null
+            );
+        } catch (error) {
+            console.error('Failed to refresh tokens:', error);
+            // If refresh fails, log out the user
+            await logout();
+        }
+    }, [user?.refreshToken]);
+
+    // Set up automatic token refresh
+    useEffect(() => {
+        if (!user?.expiresAt) return;
+
+        const now = Date.now() / 1000; // Convert to seconds
+        const timeUntilExpiry = user.expiresAt - now;
+        const refreshIn = (timeUntilExpiry - TOKEN_REFRESH_THRESHOLD) * 1000; // Convert to milliseconds
+
+        if (refreshIn <= 0) {
+            // Token is already expired or about to expire, refresh immediately
+            refreshTokens();
+            return;
+        }
+
+        // Schedule token refresh
+        const refreshTimeout = setTimeout(() => {
+            refreshTokens();
+        }, refreshIn);
+
+        return () => clearTimeout(refreshTimeout);
+    }, [user?.expiresAt, refreshTokens]);
 
     useEffect(() => {
         // Load user data from localStorage on component mount
@@ -107,8 +188,8 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     }, [user]);
 
     const value = useMemo(
-        () => ({ user, setUser, logout, isLoading }),
-        [user, isLoading, logout]
+        () => ({ user, setUser, logout, isLoading, refreshTokens }),
+        [user, isLoading, logout, refreshTokens]
     );
 
     return (
