@@ -121,15 +121,16 @@ export function SignupForm() {
                 formData.password
             );
 
-            // 3. Set user data and token
-            if (loginData.token) {
+            // 3. Set user data with new token structure
+            if (loginData.accessToken && loginData.refreshToken) {
                 const userData = {
                     username: loginData.username,
-                    token: loginData.token,
+                    accessToken: loginData.accessToken,
+                    refreshToken: loginData.refreshToken,
                 };
-                localStorage.setItem('token', loginData.token);
-                localStorage.setItem('user', JSON.stringify(userData));
                 setUser(userData);
+            } else {
+                throw new Error('Invalid response from server');
             }
 
             router.push('/');
