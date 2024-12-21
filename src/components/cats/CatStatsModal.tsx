@@ -24,7 +24,7 @@ export const CatStatsModal = ({ cat, isOpen, onClose }: CatStatsModalProps) => {
                     <div className='flex justify-between items-center'>
                         <span className='font-medium'>Happiness Level:</span>
                         <div className='flex items-center'>
-                            <div className='w-48 h-4 bg-gray-200 rounded-full overflow-hidden'>
+                            <div className='w-48 h-4 bg-accent rounded-full overflow-hidden'>
                                 <div
                                     className='h-full bg-powderBlue'
                                     style={{ width: `${cat.happinessLevel}%` }}
@@ -37,7 +37,7 @@ export const CatStatsModal = ({ cat, isOpen, onClose }: CatStatsModalProps) => {
                     <div className='flex justify-between items-center'>
                         <span className='font-medium'>Hunger Level:</span>
                         <div className='flex items-center'>
-                            <div className='w-48 h-4 bg-gray-200 rounded-full overflow-hidden'>
+                            <div className='w-48 h-4 bg-accent rounded-full overflow-hidden'>
                                 <div
                                     className='h-full bg-frenchGray'
                                     style={{ width: `${cat.hungerLevel}%` }}
