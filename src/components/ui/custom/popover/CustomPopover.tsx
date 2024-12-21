@@ -6,31 +6,31 @@ import {
 import { cn } from '@/lib/utils';
 
 interface CustomPopoverProps {
-    readonly children: React.ReactNode;
     readonly trigger: React.ReactNode;
-    readonly className?: string;
-    readonly contentClassName?: string;
-    readonly align?: 'start' | 'center' | 'end';
+    readonly children: React.ReactNode;
     readonly side?: 'top' | 'right' | 'bottom' | 'left';
+    readonly align?: 'start' | 'center' | 'end';
+    readonly contentClassName?: string;
+    readonly open?: boolean;
+    readonly onOpenChange?: (open: boolean) => void;
 }
 
 export function CustomPopover({
-    children,
     trigger,
-    className,
-    contentClassName,
+    children,
+    side = 'bottom',
     align = 'center',
-    side = 'top',
+    contentClassName,
+    open,
+    onOpenChange,
 }: CustomPopoverProps) {
     return (
-        <Popover>
-            <PopoverTrigger asChild className={className}>
-                {trigger}
-            </PopoverTrigger>
+        <Popover open={open} onOpenChange={onOpenChange}>
+            <PopoverTrigger asChild>{trigger}</PopoverTrigger>
             <PopoverContent
-                className={cn('w-80 p-4', contentClassName)}
-                align={align}
                 side={side}
+                align={align}
+                className={cn('w-80 border bg-popover p-4', contentClassName)}
             >
                 {children}
             </PopoverContent>

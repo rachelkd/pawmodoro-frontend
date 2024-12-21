@@ -49,6 +49,24 @@ export function SettingsPopover({
         autoStartFocus: initialAutoStartFocus,
     });
 
+    // Add new state to track if popover is open
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    // Reset local settings when popover closes
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        if (!open) {
+            // Reset to initial values when popover closes
+            setLocalSettings({
+                focusDuration: initialFocusDuration,
+                shortBreakDuration: initialShortBreakDuration,
+                longBreakDuration: initialLongBreakDuration,
+                autoStartBreaks: initialAutoStartBreaks,
+                autoStartFocus: initialAutoStartFocus,
+            });
+        }
+    };
+
     // Update local settings when parent settings change
     React.useEffect(() => {
         setLocalSettings({
@@ -108,6 +126,8 @@ export function SettingsPopover({
             side='top'
             align='start'
             contentClassName='bg-white/10 backdrop-blur-md border-white/20'
+            open={isOpen}
+            onOpenChange={handleOpenChange}
         >
             <div className='space-y-6'>
                 <div className='space-y-4'>
