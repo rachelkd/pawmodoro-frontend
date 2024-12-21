@@ -44,7 +44,7 @@ export function Footer({
                         <Button
                             variant='ghost'
                             size='icon'
-                            className='text-white hover:text-white hover:bg-white/30 h-12 w-12 [&_svg]:!size-6'
+                            className='h-12 w-12 [&_svg]:size-6'
                             disabled={isLoading}
                         >
                             <Settings size={24} />
@@ -56,7 +56,7 @@ export function Footer({
                 <Button
                     variant='ghost'
                     size='icon'
-                    className='text-white hover:text-white hover:bg-white/30 h-12 w-12 [&_svg]:!size-6'
+                    className='h-12 w-12 [&_svg]:size-6'
                     onClick={onSpotifyClick}
                 >
                     <FaSpotify size={24} />
@@ -64,7 +64,7 @@ export function Footer({
                 <Button
                     variant='ghost'
                     size='icon'
-                    className='text-white hover:text-white hover:bg-white/30 h-12 w-12 [&_svg]:!size-6'
+                    className='h-12 w-12 [&_svg]:size-6'
                     onClick={onStatsClick}
                 >
                     <LineChart size={24} />
@@ -73,7 +73,7 @@ export function Footer({
             <Button
                 variant='ghost'
                 size='icon'
-                className='text-white hover:text-white hover:bg-white/30 h-12 w-12 [&_svg]:!size-6'
+                className='h-12 w-12 [&_svg]:size-6'
                 onClick={onInventoryClick}
             >
                 <Package size={24} />

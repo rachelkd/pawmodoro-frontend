@@ -22,6 +22,7 @@ const config: Config = {
         gunmetal: 'hsl(206, 19%, 17%)',
         lavender: 'hsl(230, 64%, 91%)',
         hookersGreen: 'hsl(178, 16%, 42%)',
+        bone: 'hsl(39, 42%, 87%)',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

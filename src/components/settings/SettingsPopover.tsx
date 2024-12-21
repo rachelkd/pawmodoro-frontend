@@ -136,8 +136,10 @@ export function SettingsPopover({
                     <div className='space-y-4'>
                         <div className='space-y-2'>
                             <Label htmlFor='focus' className='text-white'>
-                                Focus Duration: {localSettings.focusDuration}{' '}
-                                minutes
+                                Focus Duration:{' '}
+                                <span className='text-accent-foreground'>
+                                    {localSettings.focusDuration} minutes
+                                </span>
                             </Label>
                             <Slider
                                 id='focus'
@@ -156,7 +158,9 @@ export function SettingsPopover({
                         <div className='space-y-2'>
                             <Label htmlFor='shortBreak' className='text-white'>
                                 Short Break Duration:{' '}
-                                {localSettings.shortBreakDuration} minutes
+                                <span className='text-accent-foreground'>
+                                    {localSettings.shortBreakDuration} minutes
+                                </span>
                             </Label>
                             <Slider
                                 id='shortBreak'
@@ -175,7 +179,9 @@ export function SettingsPopover({
                         <div className='space-y-2'>
                             <Label htmlFor='longBreak' className='text-white'>
                                 Long Break Duration:{' '}
-                                {localSettings.longBreakDuration} minutes
+                                <span className='text-accent-foreground'>
+                                    {localSettings.longBreakDuration} minutes
+                                </span>
                             </Label>
                             <Slider
                                 id='longBreak'

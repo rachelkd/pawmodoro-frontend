@@ -23,11 +23,7 @@ export function UserProfile() {
         return (
             <div className='flex items-center gap-4 p-4'>
                 <Link href='/login'>
-                    <Button
-                        variant='outline'
-                        size='default'
-                        className='text-white'
-                    >
+                    <Button variant='outline' size='default'>
                         Log in
                     </Button>
                 </Link>
