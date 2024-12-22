@@ -81,7 +81,7 @@ export default function Home() {
     }
 
     return (
-        <div className='min-h-screen bg-sage flex flex-col'>
+        <div className='min-h-screen flex flex-col'>
             <Header isPlaying={isPlaying} />
 
             <main className='flex-1 flex flex-col items-center justify-start gap-8 py-12'>

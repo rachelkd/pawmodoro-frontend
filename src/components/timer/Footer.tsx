@@ -21,7 +21,7 @@ export function Footer({
     onStatsClick,
     onInventoryClick,
 }: FooterProps) {
-    const { settings, isLoading, error, saveSettings, loadSettings } =
+    const { settings, isLoading, saveSettings, loadSettings } =
         useSettings(username);
     const { toast } = useToast();
 
@@ -33,7 +33,9 @@ export function Footer({
             } catch (err) {
                 toast({
                     title: 'Error',
-                    description: 'Failed to load settings',
+                    description: `Failed to load settings: ${
+                        err instanceof Error ? err.message : 'Unknown error'
+                    }`,
                     variant: 'destructive',
                 });
             }
