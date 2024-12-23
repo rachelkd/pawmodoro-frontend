@@ -10,6 +10,8 @@ import { CatContainer } from '@/components/cats/CatContainer';
 import { Cat } from '@/interfaces/Cat';
 import { fetchUserCats } from '@/services/catService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 const DEFAULT_CAT: Cat = {
     name: 'Pawmo',
@@ -24,8 +26,8 @@ export default function Home() {
     const [currentSession, setCurrentSession] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [cats, setCats] = useState<Cat[]>([DEFAULT_CAT]);
-    const [error, setError] = useState<string | null>(null);
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const { toast } = useToast();
 
     useEffect(() => {
         setMounted(true);
@@ -40,17 +42,25 @@ export default function Home() {
 
             try {
                 const response = await fetchUserCats(user.username);
-                setError('');
                 setCats(response.cats);
             } catch (err) {
-                setError('Failed to load cats');
+                toast({
+                    variant: 'destructive',
+                    title: 'Authentication Error',
+                    description: 'Failed to load cats. Please sign in again.',
+                    action: (
+                        <ToastAction altText='Sign out' onClick={logout}>
+                            Sign out
+                        </ToastAction>
+                    ),
+                });
                 console.error(err);
                 setCats([DEFAULT_CAT]);
             }
         };
 
         loadCats();
-    }, [user]);
+    }, [user, toast, logout]);
 
     const getTimerType = (): TimerType => {
         if (currentSession === 3) {
@@ -101,7 +111,6 @@ export default function Home() {
                 </div>
 
                 <div className='w-full flex flex-col items-center'>
-                    {error && <div className='text-red-500 mb-8'>{error}</div>}
                     <div className='w-full max-w-5xl px-4'>
                         <CatContainer cats={cats} />
                     </div>
