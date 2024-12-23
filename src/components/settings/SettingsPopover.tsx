@@ -11,43 +11,27 @@ import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useSettingsContext } from '@/contexts/SettingsContext';
 
 interface SettingsPopoverProps {
     readonly trigger: ReactNode;
-    readonly focusDuration: number;
-    readonly shortBreakDuration: number;
-    readonly longBreakDuration: number;
-    readonly autoStartBreaks: boolean;
-    readonly autoStartFocus: boolean;
-    readonly onSaveSettings: (settings: {
-        focusDuration: number;
-        shortBreakDuration: number;
-        longBreakDuration: number;
-        autoStartBreaks: boolean;
-        autoStartFocus: boolean;
-    }) => Promise<void>;
 }
 
-export function SettingsPopover({
-    trigger,
-    focusDuration: initialFocusDuration,
-    shortBreakDuration: initialShortBreakDuration,
-    longBreakDuration: initialLongBreakDuration,
-    autoStartBreaks: initialAutoStartBreaks,
-    autoStartFocus: initialAutoStartFocus,
-    onSaveSettings,
-}: SettingsPopoverProps) {
+export function SettingsPopover({ trigger }: SettingsPopoverProps) {
     const { user, logout } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
 
-    // Local state for form values
+    // Use the settings hook directly
+    const { settings, saveSettings } = useSettingsContext();
+
+    // Local state for form values - initialize from settings
     const [localSettings, setLocalSettings] = useState({
-        focusDuration: initialFocusDuration,
-        shortBreakDuration: initialShortBreakDuration,
-        longBreakDuration: initialLongBreakDuration,
-        autoStartBreaks: initialAutoStartBreaks,
-        autoStartFocus: initialAutoStartFocus,
+        focusDuration: settings.focusDuration,
+        shortBreakDuration: settings.shortBreakDuration,
+        longBreakDuration: settings.longBreakDuration,
+        autoStartBreaks: settings.autoStartBreaks,
+        autoStartFocus: settings.autoStartFocus,
     });
 
     // Add new state to track if popover is open
@@ -59,36 +43,33 @@ export function SettingsPopover({
         if (!open) {
             // Reset to initial values when popover closes
             setLocalSettings({
-                focusDuration: initialFocusDuration,
-                shortBreakDuration: initialShortBreakDuration,
-                longBreakDuration: initialLongBreakDuration,
-                autoStartBreaks: initialAutoStartBreaks,
-                autoStartFocus: initialAutoStartFocus,
+                focusDuration: settings.focusDuration,
+                shortBreakDuration: settings.shortBreakDuration,
+                longBreakDuration: settings.longBreakDuration,
+                autoStartBreaks: settings.autoStartBreaks,
+                autoStartFocus: settings.autoStartFocus,
             });
         }
     };
 
-    // Update local settings when parent settings change
+    // Update local settings when settings change
     useEffect(() => {
         setLocalSettings({
-            focusDuration: initialFocusDuration,
-            shortBreakDuration: initialShortBreakDuration,
-            longBreakDuration: initialLongBreakDuration,
-            autoStartBreaks: initialAutoStartBreaks,
-            autoStartFocus: initialAutoStartFocus,
+            focusDuration: settings.focusDuration,
+            shortBreakDuration: settings.shortBreakDuration,
+            longBreakDuration: settings.longBreakDuration,
+            autoStartBreaks: settings.autoStartBreaks,
+            autoStartFocus: settings.autoStartFocus,
         });
-    }, [
-        initialFocusDuration,
-        initialShortBreakDuration,
-        initialLongBreakDuration,
-        initialAutoStartBreaks,
-        initialAutoStartFocus,
-    ]);
+    }, [settings]);
 
     const handleSave = async () => {
+        console.log('handleSave called'); // Log when save is clicked
         setIsSaving(true);
         try {
-            await onSaveSettings(localSettings);
+            console.log('About to save settings:', localSettings);
+            await saveSettings(localSettings);
+            console.log('Settings saved successfully');
 
             toast({
                 title: user?.username
@@ -100,16 +81,16 @@ export function SettingsPopover({
                 variant: 'default',
             });
 
-            // Close the popover after successful save
             setIsOpen(false);
         } catch (error) {
+            console.error('Error saving settings:', error); // Log errors
             // Revert local settings on error
             setLocalSettings({
-                focusDuration: initialFocusDuration,
-                shortBreakDuration: initialShortBreakDuration,
-                longBreakDuration: initialLongBreakDuration,
-                autoStartBreaks: initialAutoStartBreaks,
-                autoStartFocus: initialAutoStartFocus,
+                focusDuration: settings.focusDuration,
+                shortBreakDuration: settings.shortBreakDuration,
+                longBreakDuration: settings.longBreakDuration,
+                autoStartBreaks: settings.autoStartBreaks,
+                autoStartFocus: settings.autoStartFocus,
             });
 
             const errorMessage =
@@ -172,12 +153,16 @@ export function SettingsPopover({
                                 max={90}
                                 step={5}
                                 value={[localSettings.focusDuration]}
-                                onValueChange={([value]) =>
+                                onValueChange={([value]) => {
+                                    console.log(
+                                        'Slider value changed to:',
+                                        value
+                                    ); // Log value changes
                                     setLocalSettings((prev) => ({
                                         ...prev,
                                         focusDuration: value,
-                                    }))
-                                }
+                                    }));
+                                }}
                             />
                         </div>
                         <div className='space-y-2'>

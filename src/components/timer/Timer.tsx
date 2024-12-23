@@ -1,32 +1,28 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettingsContext } from '@/contexts/SettingsContext';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
 interface TimerProps {
     readonly isPlaying: boolean;
     readonly timerType: TimerType;
-    readonly username?: string;
     readonly onComplete?: () => void;
 }
 
+/**
+ * Timer component that displays and manages a countdown timer for focus and break sessions.
+ * Supports auto-start functionality based on user settings.
+ */
 export function Timer({
     isPlaying = false,
     timerType,
-    username,
     onComplete,
 }: Readonly<TimerProps>) {
-    const { settings, loadSettings } = useSettings(username);
+    const { settings } = useSettingsContext();
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
-    // Load settings on mount and when settings change
-    useEffect(() => {
-        loadSettings();
-    }, [settings, loadSettings]);
-
-    // Get initial time based on timer type and settings
     const getInitialTime = useCallback(() => {
         switch (timerType) {
             case 'focus':
@@ -40,12 +36,14 @@ export function Timer({
         }
     }, [timerType, settings]);
 
-    // Reset timer when timer type changes
+    // Reset timer when timer type or settings change
     useEffect(() => {
-        setTimeLeft(getInitialTime());
-    }, [getInitialTime]);
+        if (!isPlaying) {
+            setTimeLeft(getInitialTime());
+        }
+    }, [getInitialTime, settings, timerType, isPlaying]);
 
-    // Auto-start timer based on settings
+    // Handle auto-start functionality
     useEffect(() => {
         if (timeLeft === 0) {
             const shouldAutoStart =
@@ -59,6 +57,7 @@ export function Timer({
         }
     }, [timeLeft, timerType, settings, getInitialTime]);
 
+    // Handle countdown timer
     useEffect(() => {
         if (!timeLeft) return;
 
@@ -66,20 +65,14 @@ export function Timer({
 
         if (isPlaying && timeLeft > 0) {
             intervalId = setInterval(() => {
-                setTimeLeft((prev) => {
-                    const newTime = prev && prev > 0 ? prev - 1 : 0;
-                    return newTime;
-                });
+                setTimeLeft((prev) => (prev && prev > 0 ? prev - 1 : 0));
             }, 1000);
         }
 
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
+        return () => clearInterval(intervalId);
     }, [isPlaying, timeLeft]);
 
+    // Handle timer completion
     useEffect(() => {
         if (timeLeft === 0) {
             onComplete?.();
@@ -87,27 +80,28 @@ export function Timer({
     }, [timeLeft, onComplete]);
 
     if (timeLeft === null) {
-        return (
-            <div className='flex items-center justify-center text-white text-8xl md:text-9xl font-medium tracking-tight select-none'>
-                <div className='w-[160px] text-right'>--</div>
-                <div className='w-[60px] text-center'>:</div>
-                <div className='w-[160px] text-left'>--</div>
-            </div>
-        );
+        return <TimerDisplay minutes='--' seconds='--' />;
     }
 
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
+    return (
+        <TimerDisplay
+            minutes={String(Math.floor(timeLeft / 60)).padStart(2, '0')}
+            seconds={String(timeLeft % 60).padStart(2, '0')}
+        />
+    );
+}
 
+interface TimerDisplayProps {
+    readonly minutes: string;
+    readonly seconds: string;
+}
+
+function TimerDisplay({ minutes, seconds }: Readonly<TimerDisplayProps>) {
     return (
         <div className='flex items-center justify-center text-white text-8xl md:text-9xl font-medium tracking-tight select-none'>
-            <div className='w-[160px] text-right'>
-                {String(minutes).padStart(2, '0')}
-            </div>
+            <div className='w-[160px] text-right'>{minutes}</div>
             <div className='w-[60px] text-center'>:</div>
-            <div className='w-[160px] text-left'>
-                {String(seconds).padStart(2, '0')}
-            </div>
+            <div className='w-[160px] text-left'>{seconds}</div>
         </div>
     );
 }

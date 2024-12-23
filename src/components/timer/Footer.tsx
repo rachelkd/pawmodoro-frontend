@@ -5,8 +5,6 @@ import { FaSpotify } from 'react-icons/fa';
 import { Package, LineChart, Settings } from 'lucide-react';
 import { SettingsPopover } from '@/components/settings/SettingsPopover';
 import { useSettings } from '@/hooks/useSettings';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
 
 interface FooterProps {
     readonly username?: string;
@@ -21,27 +19,7 @@ export function Footer({
     onStatsClick,
     onInventoryClick,
 }: FooterProps) {
-    const { settings, isLoading, saveSettings, loadSettings } =
-        useSettings(username);
-    const { toast } = useToast();
-
-    // Load settings on mount and when username changes
-    useEffect(() => {
-        const loadSettingsData = async () => {
-            try {
-                await loadSettings();
-            } catch (err) {
-                toast({
-                    title: 'Error',
-                    description: `Failed to load settings: ${
-                        err instanceof Error ? err.message : 'Unknown error'
-                    }`,
-                    variant: 'destructive',
-                });
-            }
-        };
-        loadSettingsData();
-    }, [loadSettings, toast, username]); // Only depend on loadSettings, toast, and username
+    const { isLoading } = useSettings(username);
 
     return (
         <footer className='p-6 flex justify-between'>
@@ -57,8 +35,6 @@ export function Footer({
                             <Settings size={24} />
                         </Button>
                     }
-                    {...settings}
-                    onSaveSettings={saveSettings}
                 />
                 <Button
                     variant='ghost'

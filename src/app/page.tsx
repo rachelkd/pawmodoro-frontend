@@ -12,6 +12,7 @@ import { fetchUserCats } from '@/services/catService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
+import { SettingsProvider } from '@/contexts/SettingsContext';
 
 const DEFAULT_CAT: Cat = {
     name: 'Pawmo',
@@ -63,61 +64,51 @@ export default function Home() {
     }, [user, toast, logout]);
 
     const getTimerType = (): TimerType => {
-        if (currentSession === 3) {
-            return 'longBreak';
-        }
+        if (currentSession === 3) return 'longBreak';
         return currentSession % 2 === 0 ? 'focus' : 'shortBreak';
     };
 
-    const handlePlayPause = () => {
-        setIsPlaying(!isPlaying);
-    };
-
+    const handlePlayPause = () => setIsPlaying(!isPlaying);
     const handleNext = () => {
         setIsPlaying(false);
         setCurrentSession((prev) => (prev + 1) % 4);
     };
-
     const handlePrevious = () => {
         setIsPlaying(false);
         setCurrentSession((prev) => (prev - 1 + 4) % 4);
     };
 
-    if (!mounted) {
-        return null;
-    }
+    if (!mounted) return null;
 
     return (
         <div className='min-h-screen flex flex-col'>
-            <Header isPlaying={isPlaying} />
-
-            <main className='flex-1 flex flex-col items-center justify-start gap-8 py-12'>
-                <div className='flex-1 flex items-center justify-center w-full'>
-                    <div className='flex flex-col items-center justify-center gap-6'>
-                        <Timer
-                            isPlaying={isPlaying}
-                            timerType={getTimerType()}
-                            username={user?.username}
-                            onComplete={handleNext}
-                        />
-                        <SessionIndicator currentSession={currentSession} />
-                        <Controls
-                            isPlaying={isPlaying}
-                            onPlayPause={handlePlayPause}
-                            onNext={handleNext}
-                            onPrevious={handlePrevious}
-                        />
+            <SettingsProvider username={user?.username}>
+                <Header isPlaying={isPlaying} />
+                <main className='flex-1 flex flex-col items-center justify-start gap-8 py-12'>
+                    <div className='flex-1 flex items-center justify-center w-full'>
+                        <div className='flex flex-col items-center justify-center gap-6'>
+                            <Timer
+                                isPlaying={isPlaying}
+                                timerType={getTimerType()}
+                                onComplete={handleNext}
+                            />
+                            <SessionIndicator currentSession={currentSession} />
+                            <Controls
+                                isPlaying={isPlaying}
+                                onPlayPause={handlePlayPause}
+                                onNext={handleNext}
+                                onPrevious={handlePrevious}
+                            />
+                        </div>
                     </div>
-                </div>
-
-                <div className='w-full flex flex-col items-center'>
-                    <div className='w-full max-w-5xl px-4'>
-                        <CatContainer cats={cats} />
+                    <div className='w-full flex flex-col items-center'>
+                        <div className='w-full max-w-5xl px-4'>
+                            <CatContainer cats={cats} />
+                        </div>
                     </div>
-                </div>
-            </main>
-
-            <Footer username={user?.username} />
+                </main>
+                <Footer username={user?.username} />
+            </SettingsProvider>
         </div>
     );
 }

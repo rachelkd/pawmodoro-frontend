@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from '@/constants/storage';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { User } from '@/interfaces/User';
 
 interface Settings {
     focusDuration: number;
@@ -26,30 +27,28 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
 
 // Helper function to get settings from localStorage
 const getStoredSettings = (): Settings => {
     try {
         const storedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-        if (storedSettings) {
-            return JSON.parse(storedSettings);
-        }
+        return storedSettings ? JSON.parse(storedSettings) : DEFAULT_SETTINGS;
     } catch (err) {
         console.error('Failed to load settings from localStorage:', err);
+        return DEFAULT_SETTINGS;
     }
-    return DEFAULT_SETTINGS;
 };
 
-// Helper function to delay execution
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper function to get user data from localStorage
-const getUserData = () => {
-    const userData = localStorage.getItem(STORAGE_KEYS.USER);
-    if (!userData) return null;
-    return JSON.parse(userData);
+// Update the getUserData helper function
+const getUserData = (): User | null => {
+    try {
+        const userData = localStorage.getItem(STORAGE_KEYS.USER);
+        if (!userData) return null;
+        return JSON.parse(userData);
+    } catch (err) {
+        console.error('Failed to parse user data:', err);
+        return null;
+    }
 };
 
 export function useSettings(username?: string): UseSettingsReturn {
@@ -57,92 +56,56 @@ export function useSettings(username?: string): UseSettingsReturn {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchSettingsWithRetry = useCallback(async (retryCount = 0): Promise<Settings> => {
+    const loadSettings = useCallback(async () => {
+        if (!username) {
+            setSettings(getStoredSettings());
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
         try {
             const userData = getUserData();
-            if (!userData?.accessToken) {
-                throw new Error('No authentication token found');
-            }
+            if (!userData?.accessToken) throw new Error('No authentication token found');
 
             const response = await fetch(`${API_URL}/api/settings/${username}`, {
-                headers: {
-                    Authorization: `Bearer ${userData.accessToken}`,
-                },
+                headers: { Authorization: `Bearer ${userData.accessToken}` },
             });
 
-            if (response.status === 401) {
-                throw new Error('Authentication failed - please sign out and log in again');
-            }
-
             if (!response.ok) {
-                throw new Error('Failed to fetch settings');
+                throw new Error(
+                    response.status === 401
+                        ? 'Authentication failed - please sign out and log in again'
+                        : 'Failed to fetch settings'
+                );
             }
 
-            return await response.json();
-        } catch (err) {
-            if (retryCount < MAX_RETRIES) {
-                await delay(RETRY_DELAY * (retryCount + 1));
-                return fetchSettingsWithRetry(retryCount + 1);
-            }
-            throw err;
-        }
-    }, [username]);
-
-    const loadSettings = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-
-            if (!username) {
-                // For non-logged-in users, load from localStorage
-                setSettings(getStoredSettings());
-                return;
-            }
-
-            // For logged-in users, try to fetch from backend
-            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
-            const data = await fetchSettingsWithRetry();
+            const data = await response.json();
             setSettings(data);
         } catch (err) {
-            console.error('Failed to fetch settings after retries:', err);
+            console.error('Failed to fetch settings:', err);
             setError(err instanceof Error ? err.message : 'An error occurred');
-            
-            // Fall back to local storage or defaults
             setSettings(getStoredSettings());
         } finally {
             setIsLoading(false);
         }
-    }, [username, fetchSettingsWithRetry]);
-
-    // Load settings on mount or when username changes
-    useEffect(() => {
-        loadSettings();
-    }, [loadSettings]);
+    }, [username]);
 
     const saveSettings = useCallback(async (newSettings: Settings): Promise<void> => {
         setError(null);
-        
-        // For non-logged-in users, save to localStorage
-        if (!username) {
-            try {
-                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
-                setSettings(newSettings);
-            } catch (err) {
-                const errorMessage = 'Failed to save settings to localStorage';
-                console.error(errorMessage, err);
-                setError(errorMessage);
-                throw new Error(errorMessage);
-            }
-            return;
-        }
+        const previousSettings = settings;
 
-        // For logged-in users, remove local settings and save to backend
         try {
-            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
-            const userData = getUserData();
-            if (!userData?.accessToken) {
-                throw new Error('No authentication token found');
+            setSettings(newSettings);
+
+            if (!username) {
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
+                return;
             }
+
+            const userData = getUserData();
+            if (!userData?.accessToken) throw new Error('No authentication token found');
 
             const response = await fetch(`${API_URL}/api/settings/${username}`, {
                 method: 'PUT',
@@ -153,29 +116,19 @@ export function useSettings(username?: string): UseSettingsReturn {
                 body: JSON.stringify(newSettings),
             });
 
-            if (response.status === 401) {
-                throw new Error('Authentication failed - please sign out and log in again');
-            }
-
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update settings');
+                throw new Error(
+                    response.status === 401
+                        ? 'Authentication failed - please sign out and log in again'
+                        : 'Failed to update settings'
+                );
             }
-
-            const responseData = await response.json();
-            setSettings(responseData);
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-            setError(errorMessage);
+            setSettings(previousSettings);
+            setError(err instanceof Error ? err.message : 'An error occurred');
             throw err;
         }
-    }, [username]);
+    }, [username, settings]);
 
-    return {
-        settings,
-        isLoading,
-        error,
-        saveSettings,
-        loadSettings,
-    };
+    return { settings, isLoading, error, saveSettings, loadSettings };
 } 
