@@ -89,15 +89,18 @@ export function useSettings(username?: string): UseSettingsReturn {
     }, [username]);
 
     const loadSettings = useCallback(async () => {
-        if (!username) {
-            return;
-        }
-
         try {
             setIsLoading(true);
             setError(null);
+
+            if (!username) {
+                // For non-logged-in users, load from localStorage
+                setSettings(getStoredSettings());
+                return;
+            }
+
+            // For logged-in users, try to fetch from backend
             localStorage.removeItem(STORAGE_KEYS.SETTINGS);
-            
             const data = await fetchSettingsWithRetry();
             setSettings(data);
         } catch (err) {

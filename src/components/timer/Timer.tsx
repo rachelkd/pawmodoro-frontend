@@ -21,7 +21,7 @@ export function Timer({
     const { settings, loadSettings } = useSettings(username);
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
-    // Load settings on mount
+    // Load settings on mount and when settings change
     useEffect(() => {
         loadSettings();
     }, [settings, loadSettings]);
