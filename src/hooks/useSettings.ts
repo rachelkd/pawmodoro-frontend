@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '@/constants/storage';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface Settings {
     focusDuration: number;
@@ -38,7 +38,6 @@ const getStoredSettings = (): Settings => {
         }
     } catch (err) {
         console.error('Failed to load settings from localStorage:', err);
-        throw err;
     }
     return DEFAULT_SETTINGS;
 };
@@ -46,18 +45,17 @@ const getStoredSettings = (): Settings => {
 // Helper function to delay execution
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Helper function to get user data from localStorage
+const getUserData = () => {
+    const userData = localStorage.getItem(STORAGE_KEYS.USER);
+    if (!userData) return null;
+    return JSON.parse(userData);
+};
+
 export function useSettings(username?: string): UseSettingsReturn {
-    // Initialize with stored settings or defaults
-    const [settings, setSettings] = useState<Settings>(() => getStoredSettings());
+    const [settings, setSettings] = useState<Settings>(getStoredSettings);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Get the user data from localStorage
-    const getUserData = () => {
-        const userData = localStorage.getItem(STORAGE_KEYS.USER);
-        if (!userData) return null;
-        return JSON.parse(userData);
-    };
 
     const fetchSettingsWithRetry = useCallback(async (retryCount = 0): Promise<Settings> => {
         try {
@@ -91,26 +89,15 @@ export function useSettings(username?: string): UseSettingsReturn {
     }, [username]);
 
     const loadSettings = useCallback(async () => {
-        setError(null);
-
-        // For non-logged-in users, load from localStorage
         if (!username) {
-            try {
-                const storedSettings = getStoredSettings();
-                setSettings(storedSettings);
-            } catch (err) {
-                console.error('Failed to load settings from localStorage:', err);
-                setSettings(DEFAULT_SETTINGS);
-                throw new Error('Failed to load settings from localStorage');
-            }
             return;
         }
 
-        // For logged-in users, try to load from backend with retries
         try {
-            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
             setIsLoading(true);
-
+            setError(null);
+            localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+            
             const data = await fetchSettingsWithRetry();
             setSettings(data);
         } catch (err) {
@@ -118,17 +105,18 @@ export function useSettings(username?: string): UseSettingsReturn {
             setError(err instanceof Error ? err.message : 'An error occurred');
             
             // Fall back to local storage or defaults
-            const fallbackSettings = getStoredSettings();
-            setSettings(fallbackSettings);
-            
-            // Re-throw the error after setting fallback
-            throw err;
+            setSettings(getStoredSettings());
         } finally {
             setIsLoading(false);
         }
     }, [username, fetchSettingsWithRetry]);
 
-    const saveSettings = async (newSettings: Settings): Promise<void> => {
+    // Load settings on mount or when username changes
+    useEffect(() => {
+        loadSettings();
+    }, [loadSettings]);
+
+    const saveSettings = useCallback(async (newSettings: Settings): Promise<void> => {
         setError(null);
         
         // For non-logged-in users, save to localStorage
@@ -137,8 +125,10 @@ export function useSettings(username?: string): UseSettingsReturn {
                 localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
                 setSettings(newSettings);
             } catch (err) {
-                console.error('Failed to save settings to localStorage:', err);
-                throw new Error('Failed to save settings');
+                const errorMessage = 'Failed to save settings to localStorage';
+                console.error(errorMessage, err);
+                setError(errorMessage);
+                throw new Error(errorMessage);
             }
             return;
         }
@@ -172,10 +162,11 @@ export function useSettings(username?: string): UseSettingsReturn {
             const responseData = await response.json();
             setSettings(responseData);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
+            const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+            setError(errorMessage);
             throw err;
         }
-    };
+    }, [username]);
 
     return {
         settings,
