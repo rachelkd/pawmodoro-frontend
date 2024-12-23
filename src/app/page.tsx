@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/timer/Header';
-import { Timer } from '@/components/timer/Timer';
+import { Timer, TimerType } from '@/components/timer/Timer';
 import { SessionIndicator } from '@/components/timer/SessionIndicator';
 import { Controls } from '@/components/timer/Controls';
 import { Footer } from '@/components/timer/Footer';
@@ -10,10 +10,6 @@ import { CatContainer } from '@/components/cats/CatContainer';
 import { Cat } from '@/interfaces/Cat';
 import { fetchUserCats } from '@/services/catService';
 import { useAuth } from '@/contexts/AuthContext';
-
-const FOCUS_TIME = 25 * 60; // 25 minutes in seconds
-const SHORT_BREAK = 5 * 60; // 5 minutes in seconds
-const LONG_BREAK = 15 * 60; // 15 minutes in seconds
 
 const DEFAULT_CAT: Cat = {
     name: 'Pawmo',
@@ -44,6 +40,7 @@ export default function Home() {
 
             try {
                 const response = await fetchUserCats(user.username);
+                setError('');
                 setCats(response.cats);
             } catch (err) {
                 setError('Failed to load cats');
@@ -55,11 +52,11 @@ export default function Home() {
         loadCats();
     }, [user]);
 
-    const getCurrentSessionTime = () => {
+    const getTimerType = (): TimerType => {
         if (currentSession === 3) {
-            return LONG_BREAK;
+            return 'longBreak';
         }
-        return currentSession % 2 === 0 ? FOCUS_TIME : SHORT_BREAK;
+        return currentSession % 2 === 0 ? 'focus' : 'shortBreak';
     };
 
     const handlePlayPause = () => {
@@ -89,7 +86,8 @@ export default function Home() {
                     <div className='flex flex-col items-center justify-center gap-6'>
                         <Timer
                             isPlaying={isPlaying}
-                            initialTime={getCurrentSessionTime()}
+                            timerType={getTimerType()}
+                            username={user?.username}
                             onComplete={handleNext}
                         />
                         <SessionIndicator currentSession={currentSession} />

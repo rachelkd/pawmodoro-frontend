@@ -1,23 +1,63 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useSettings } from '@/hooks/useSettings';
+
+export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
 interface TimerProps {
-    isPlaying: boolean;
-    initialTime: number;
-    onComplete?: () => void;
+    readonly isPlaying: boolean;
+    readonly timerType: TimerType;
+    readonly username?: string;
+    readonly onComplete?: () => void;
 }
 
 export function Timer({
     isPlaying = false,
-    initialTime = 1200,
+    timerType,
+    username,
     onComplete,
-}: TimerProps) {
+}: Readonly<TimerProps>) {
+    const { settings, loadSettings } = useSettings(username);
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
+    // Load settings on mount
     useEffect(() => {
-        setTimeLeft(initialTime);
-    }, [initialTime]);
+        loadSettings();
+    }, [settings, loadSettings]);
+
+    // Get initial time based on timer type and settings
+    const getInitialTime = useCallback(() => {
+        switch (timerType) {
+            case 'focus':
+                return settings.focusDuration * 60;
+            case 'shortBreak':
+                return settings.shortBreakDuration * 60;
+            case 'longBreak':
+                return settings.longBreakDuration * 60;
+            default:
+                return settings.focusDuration * 60;
+        }
+    }, [timerType, settings]);
+
+    // Reset timer when timer type changes
+    useEffect(() => {
+        setTimeLeft(getInitialTime());
+    }, [getInitialTime]);
+
+    // Auto-start timer based on settings
+    useEffect(() => {
+        if (timeLeft === 0) {
+            const shouldAutoStart =
+                timerType === 'focus'
+                    ? settings.autoStartFocus
+                    : settings.autoStartBreaks;
+
+            if (shouldAutoStart) {
+                setTimeLeft(getInitialTime());
+            }
+        }
+    }, [timeLeft, timerType, settings, getInitialTime]);
 
     useEffect(() => {
         if (!timeLeft) return;
