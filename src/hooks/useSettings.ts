@@ -85,7 +85,7 @@ export function useSettings(username?: string): UseSettingsReturn {
             setSettings(data);
         } catch (err) {
             console.error('Failed to fetch settings:', err);
-            setError(err instanceof Error ? err.message : 'An error occurred');
+            setError(err instanceof Error ? err.message : 'An error occurred. Please check your internet connection and try again.');
             setSettings(getStoredSettings());
         } finally {
             setIsLoading(false);
@@ -105,7 +105,7 @@ export function useSettings(username?: string): UseSettingsReturn {
             }
 
             const userData = getUserData();
-            if (!userData?.accessToken) throw new Error('No authentication token found');
+            if (!userData?.accessToken) throw new Error('Authentication failed. Please sign out and log in again.');
 
             const response = await fetch(`${API_URL}/api/settings/${username}`, {
                 method: 'PUT',
@@ -119,13 +119,13 @@ export function useSettings(username?: string): UseSettingsReturn {
             if (!response.ok) {
                 throw new Error(
                     response.status === 401
-                        ? 'Authentication failed - please sign out and log in again'
-                        : 'Failed to update settings'
+                        ? 'Authentication failed. Please sign out and log in again.'
+                        : 'Failed to update settings.'
                 );
             }
         } catch (err) {
             setSettings(previousSettings);
-            setError(err instanceof Error ? err.message : 'An error occurred');
+            setError(err instanceof Error ? err.message : 'An error occurred. Please check your internet connection and try again.');
             throw err;
         }
     }, [username, settings]);

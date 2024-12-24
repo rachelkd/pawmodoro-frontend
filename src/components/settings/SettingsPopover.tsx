@@ -64,12 +64,9 @@ export function SettingsPopover({ trigger }: SettingsPopoverProps) {
     }, [settings]);
 
     const handleSave = async () => {
-        console.log('handleSave called'); // Log when save is clicked
         setIsSaving(true);
         try {
-            console.log('About to save settings:', localSettings);
             await saveSettings(localSettings);
-            console.log('Settings saved successfully');
 
             toast({
                 title: user?.username
@@ -113,6 +110,13 @@ export function SettingsPopover({ trigger }: SettingsPopoverProps) {
                             Sign out
                         </ToastAction>
                     ),
+                });
+            } else if (errorMessage.includes('NetworkError')) {
+                toast({
+                    title: 'Network Error',
+                    description:
+                        'Please check your internet connection and try again.',
+                    variant: 'destructive',
                 });
             } else {
                 toast({
