@@ -41,7 +41,7 @@ export function Header({
                     height={64}
                     className='object-contain'
                 />
-                <h1 className='text-white/90 text-2xl font-medium'>
+                <h1 className='text-white/90 text-xl sm:text-2xl font-medium'>
                     pawmodoro
                 </h1>
             </Link>
