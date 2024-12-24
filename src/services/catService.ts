@@ -27,7 +27,7 @@ interface CreateCatResponse {
  * @throws Error if the fetch request fails
  */
 export const fetchUserCats = async (username: string): Promise<CatsResponse> => {
-    console.log('Fetching cats for: ', username);
+    console.log('Fetching cats for:', username);
     const response = await fetch(`${API_URL}/api/cats/${username}`, {
         headers: {
             'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
@@ -83,7 +83,7 @@ export const createCat = async (username: string, catData: CreateCatRequest): Pr
  * @throws Error if the deletion fails
  */
 export const deleteCat = async (username: string, catName: string): Promise<void> => {
-    console.log('Deleting cat ', catName, ' for user ', username);
+    console.log('Deleting cat', catName, 'for user', username);
     const response = await fetch(`${API_URL}/api/cats/${username}`, {
         method: 'DELETE',
         headers: {
