@@ -1,5 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useSettings } from '@/hooks/useSettings';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Settings {
     readonly focusDuration: number;
@@ -21,14 +22,13 @@ const SettingsContext = createContext<SettingsContextType | null>(null);
 
 interface SettingsProviderProps {
     readonly children: ReactNode;
-    readonly username?: string;
 }
 
 export function SettingsProvider({
     children,
-    username,
 }: Readonly<SettingsProviderProps>) {
-    const settingsData = useSettings(username);
+    const { user } = useAuth();
+    const settingsData = useSettings(user?.username);
 
     return (
         <SettingsContext.Provider value={settingsData}>

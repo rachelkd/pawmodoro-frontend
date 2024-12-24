@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from '@/constants/storage';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { User } from '@/interfaces/User';
 
 interface Settings {
@@ -67,7 +67,11 @@ export function useSettings(username?: string): UseSettingsReturn {
 
         try {
             const userData = getUserData();
-            if (!userData?.accessToken) throw new Error('No authentication token found');
+            if (!userData?.accessToken) {
+                // If no user data is available yet, just use stored settings
+                setSettings(getStoredSettings());
+                return;
+            }
 
             const response = await fetch(`${API_URL}/api/settings/${username}`, {
                 headers: { Authorization: `Bearer ${userData.accessToken}` },
@@ -82,7 +86,17 @@ export function useSettings(username?: string): UseSettingsReturn {
             }
 
             const data = await response.json();
-            setSettings(data);
+            // Extract only the settings fields we need
+            const settingsToStore = {
+                focusDuration: data.focusDuration,
+                shortBreakDuration: data.shortBreakDuration,
+                longBreakDuration: data.longBreakDuration,
+                autoStartBreaks: data.autoStartBreaks,
+                autoStartFocus: data.autoStartFocus,
+            };
+            setSettings(settingsToStore);
+            // Also update localStorage for offline access
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settingsToStore));
         } catch (err) {
             console.error('Failed to fetch settings:', err);
             setError(err instanceof Error ? err.message : 'An error occurred. Please check your internet connection and try again.');
@@ -92,6 +106,15 @@ export function useSettings(username?: string): UseSettingsReturn {
         }
     }, [username]);
 
+    // Get user data for the effect dependency
+    const userData = getUserData();
+    const accessToken = userData?.accessToken;
+
+    // Load settings when the component mounts or when username/token changes
+    useEffect(() => {
+        loadSettings();
+    }, [username, accessToken, loadSettings]);
+
     const saveSettings = useCallback(async (newSettings: Settings): Promise<void> => {
         setError(null);
         const previousSettings = settings;
@@ -99,8 +122,11 @@ export function useSettings(username?: string): UseSettingsReturn {
         try {
             setSettings(newSettings);
 
+            // Always save to localStorage for offline access
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
+
+            // If no username, we're done (guest mode)
             if (!username) {
-                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
                 return;
             }
 
@@ -125,6 +151,7 @@ export function useSettings(username?: string): UseSettingsReturn {
             }
         } catch (err) {
             setSettings(previousSettings);
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(previousSettings));
             setError(err instanceof Error ? err.message : 'An error occurred. Please check your internet connection and try again.');
             throw err;
         }
