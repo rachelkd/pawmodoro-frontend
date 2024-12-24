@@ -39,7 +39,7 @@ export function CatAdoptionDialog({
     onSuccess,
 }: CatAdoptionDialogProps) {
     const { user } = useAuth();
-    const { refreshCats } = useCats();
+    const { refreshCats, cats } = useCats();
     const [catName, setCatName] = useState('');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,8 +99,9 @@ export function CatAdoptionDialog({
                 <AlertDialogHeader>
                     <AlertDialogTitle>Adopt a Cat</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Congrats on completing your focus session! Choose your
-                        new feline friend and give them a name.
+                        {cats.length === 0
+                            ? 'Welcome to Pawmodoro! Choose your new feline friend and give them a name.'
+                            : 'Congrats on completing your focus session! Choose your new feline friend and give them a name.'}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 

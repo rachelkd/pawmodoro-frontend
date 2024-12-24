@@ -10,11 +10,16 @@ import { CatAdoptionDialog } from '@/components/ui/custom/popover/CatAdoptionDia
 import { CatContainer } from '@/components/cats/CatContainer';
 import { useTimer } from '@/hooks/useTimer';
 import { useSettingsContext } from '@/contexts/SettingsContext';
+import { useCats } from '@/contexts/CatContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
     const [mounted, setMounted] = useState(false);
     const [isAdoptionOpen, setIsAdoptionOpen] = useState(false);
     const [shouldAdvanceSession, setShouldAdvanceSession] = useState(false);
+
+    const { cats } = useCats();
+    const { user } = useAuth();
 
     const {
         isPlaying,
@@ -31,6 +36,13 @@ export default function Home() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Show adoption modal if user is logged in but has no cats
+    useEffect(() => {
+        if (user && cats.length === 0) {
+            setIsAdoptionOpen(true);
+        }
+    }, [user, cats]);
 
     const handleTimerComplete = () => {
         // If it's a focus session, open the adoption dialog
