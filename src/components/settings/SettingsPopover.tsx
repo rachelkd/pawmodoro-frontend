@@ -158,10 +158,6 @@ export function SettingsPopover({ trigger }: SettingsPopoverProps) {
                                 step={5}
                                 value={[localSettings.focusDuration]}
                                 onValueChange={([value]) => {
-                                    console.log(
-                                        'Slider value changed to:',
-                                        value
-                                    ); // Log value changes
                                     setLocalSettings((prev) => ({
                                         ...prev,
                                         focusDuration: value,
