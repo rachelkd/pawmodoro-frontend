@@ -135,10 +135,10 @@ export function CatProvider({ children }: CatProviderProps) {
     );
 
     useEffect(() => {
-        if (user?.username && user?.accessToken && !needsTokenRefresh()) {
-            loadCats();
-        } else if (user?.username && user?.accessToken && needsTokenRefresh()) {
+        if (user?.username && user?.accessToken && needsTokenRefresh()) {
             refreshTokens().then(() => loadCats());
+        } else {
+            loadCats();
         }
     }, [
         loadCats,
