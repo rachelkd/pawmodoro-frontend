@@ -4,22 +4,20 @@ import { Button } from '@/components/ui/button';
 import { FaSpotify } from 'react-icons/fa';
 import { Package, LineChart, Settings } from 'lucide-react';
 import { SettingsPopover } from '@/components/settings/SettingsPopover';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettingsContext } from '@/contexts/SettingsContext';
 
 interface FooterProps {
-    readonly username?: string;
     readonly onSpotifyClick?: () => void;
     readonly onStatsClick?: () => void;
     readonly onInventoryClick?: () => void;
 }
 
 export function Footer({
-    username,
     onSpotifyClick,
     onStatsClick,
     onInventoryClick,
 }: FooterProps) {
-    const { isLoading } = useSettings(username);
+    const { isLoading } = useSettingsContext();
 
     return (
         <footer className='p-6 flex justify-between'>
