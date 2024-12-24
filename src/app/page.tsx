@@ -51,7 +51,7 @@ export default function Home() {
                     description: 'Failed to load cats. Please sign in again.',
                     action: (
                         <ToastAction altText='Sign out' onClick={logout}>
-                            Sign out
+                            Logout
                         </ToastAction>
                     ),
                 });
