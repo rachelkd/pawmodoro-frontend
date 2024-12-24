@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -24,10 +23,8 @@ export function Timer({
 }: Readonly<TimerProps>) {
     const { settings } = useSettingsContext();
     const { toast } = useToast();
-    const { user } = useAuth();
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [isCompleting, setIsCompleting] = useState(false);
-    const isInitialMount = useRef(true);
     const previousTimerType = useRef(timerType);
 
     const getInitialTime = useCallback(() => {
@@ -48,16 +45,12 @@ export function Timer({
         setTimeLeft(getInitialTime());
         setIsCompleting(false);
 
-        // Skip showing toast on initial mount or during logout
-        if (isInitialMount.current || !user) {
-            isInitialMount.current = false;
-            return;
-        }
-
-        // Only show toast if timer type actually changed
+        // Only show toast if timer type changed
         if (previousTimerType.current === timerType) {
             return;
         }
+
+        // Update previous timer type before showing toast
         previousTimerType.current = timerType;
 
         const getSessionName = (type: TimerType): string => {
@@ -87,7 +80,7 @@ export function Timer({
             description: getSessionDescription(timerType),
             duration: 3000,
         });
-    }, [getInitialTime, timerType, toast, user]);
+    }, [getInitialTime, timerType, toast]);
 
     // Handle countdown timer
     useEffect(() => {
