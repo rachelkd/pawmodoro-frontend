@@ -1,7 +1,7 @@
 import './globals.css';
 import { Bricolage_Grotesque } from 'next/font/google';
 import type { Metadata } from 'next';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { Providers } from '@/components/providers/Providers';
 import { Toaster } from '@/components/ui/toaster';
 
 const bricolage = Bricolage_Grotesque({
@@ -22,7 +22,7 @@ export default function RootLayout({
     return (
         <html lang='en'>
             <body className={bricolage.className}>
-                <AuthProvider>{children}</AuthProvider>
+                <Providers>{children}</Providers>
                 <Toaster />
             </body>
         </html>
