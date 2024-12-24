@@ -41,7 +41,7 @@ export function CatProvider({ children }: CatProviderProps) {
     const { toast } = useToast();
 
     const loadCats = useCallback(async () => {
-        if (!user?.username) {
+        if (!user?.username || !user?.accessToken) {
             setCats([DEFAULT_CAT]);
             return;
         }
@@ -55,35 +55,59 @@ export function CatProvider({ children }: CatProviderProps) {
             const response = await fetchUserCats(user.username);
             setCats(response.cats);
         } catch (err: unknown) {
-            if (err instanceof Error && err.message.includes('NetworkError')) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Network Error',
-                    description:
-                        'Failed to load cats. Please check your internet connection and try again.',
-                });
-            } else {
-                toast({
-                    variant: 'destructive',
-                    title: 'Authentication Error',
-                    description: 'Failed to load cats. Please sign in again.',
-                    action: (
-                        <ToastAction altText='Sign out' onClick={logout}>
-                            Logout
-                        </ToastAction>
-                    ),
-                });
+            if (err instanceof Error) {
+                console.log(err.message);
+                if (err.message.includes('NetworkError')) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Network Error',
+                        description:
+                            'Failed to load cats. Please check your internet connection and try again.',
+                    });
+                } else if (
+                    err.message.includes('Invalid token') ||
+                    err.message.includes('expired')
+                ) {
+                    try {
+                        await refreshTokens();
+                        const response = await fetchUserCats(user.username);
+                        setCats(response.cats);
+                        return;
+                    } catch (refreshError) {
+                        console.error('Token refresh failed:', refreshError);
+                        toast({
+                            variant: 'destructive',
+                            title: 'Authentication Error',
+                            description:
+                                'Failed to load cats. Please sign in again.',
+                            action: (
+                                <ToastAction
+                                    altText='Sign out'
+                                    onClick={logout}
+                                >
+                                    Logout
+                                </ToastAction>
+                            ),
+                        });
+                    }
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Error',
+                        description: 'Failed to load cats. Please try again.',
+                    });
+                }
             }
             console.error(err);
             setCats([DEFAULT_CAT]);
         } finally {
             setIsLoading(false);
         }
-    }, [user, toast, refreshTokens, needsTokenRefresh]);
+    }, [user, toast, refreshTokens, needsTokenRefresh, logout]);
 
     const deleteCatByName = useCallback(
         async (catName: string) => {
-            if (!user?.username) return;
+            if (!user?.username || !user?.accessToken) return;
 
             setIsLoading(true);
             try {
@@ -92,7 +116,8 @@ export function CatProvider({ children }: CatProviderProps) {
                 }
 
                 await deleteCat(user.username, catName);
-                await loadCats(); // Refresh the cats list after deletion
+                // Refresh cats after deletion
+                await loadCats();
                 toast({
                     title: 'Cat Deleted',
                     description: `${catName} has been deleted.`,
@@ -112,8 +137,18 @@ export function CatProvider({ children }: CatProviderProps) {
     );
 
     useEffect(() => {
-        loadCats();
-    }, [loadCats]);
+        if (user?.username && user?.accessToken && !needsTokenRefresh()) {
+            loadCats();
+        } else if (user?.username && user?.accessToken && needsTokenRefresh()) {
+            refreshTokens().then(() => loadCats());
+        }
+    }, [
+        loadCats,
+        user?.username,
+        user?.accessToken,
+        needsTokenRefresh,
+        refreshTokens,
+    ]);
 
     const contextValue = useMemo(
         () => ({

@@ -35,7 +35,8 @@ export const fetchUserCats = async (username: string): Promise<CatsResponse> => 
     });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch cats');
+        const error = await response.json();
+        throw new Error(`Failed to fetch cats: ${error.message}`);
     }
 
     return response.json();
