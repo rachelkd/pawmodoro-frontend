@@ -16,12 +16,13 @@ interface TimerProps {
  * Supports auto-start functionality based on user settings.
  */
 export function Timer({
-    isPlaying = false,
+    isPlaying,
     timerType,
     onComplete,
 }: Readonly<TimerProps>) {
     const { settings } = useSettingsContext();
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [isCompleting, setIsCompleting] = useState(false);
 
     const getInitialTime = useCallback(() => {
         switch (timerType) {
@@ -36,26 +37,11 @@ export function Timer({
         }
     }, [timerType, settings]);
 
-    // Reset timer when timer type or settings change
+    // Only reset timer when timer type changes
     useEffect(() => {
-        if (!isPlaying) {
-            setTimeLeft(getInitialTime());
-        }
-    }, [getInitialTime, settings, timerType, isPlaying]);
-
-    // Handle auto-start functionality
-    useEffect(() => {
-        if (timeLeft === 0) {
-            const shouldAutoStart =
-                timerType === 'focus'
-                    ? settings.autoStartFocus
-                    : settings.autoStartBreaks;
-
-            if (shouldAutoStart) {
-                setTimeLeft(getInitialTime());
-            }
-        }
-    }, [timeLeft, timerType, settings, getInitialTime]);
+        setTimeLeft(getInitialTime());
+        setIsCompleting(false);
+    }, [getInitialTime, timerType]);
 
     // Handle countdown timer
     useEffect(() => {
@@ -72,12 +58,13 @@ export function Timer({
         return () => clearInterval(intervalId);
     }, [isPlaying, timeLeft]);
 
-    // Handle timer completion
+    // Handle both completion and auto-start
     useEffect(() => {
-        if (timeLeft === 0) {
+        if (timeLeft === 0 && !isCompleting) {
+            setIsCompleting(true);
             onComplete?.();
         }
-    }, [timeLeft, onComplete]);
+    }, [timeLeft, onComplete, isCompleting]);
 
     if (timeLeft === null) {
         return <TimerDisplay minutes='--' seconds='--' />;
