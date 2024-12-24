@@ -12,6 +12,7 @@ import { fetchUserCats, deleteCat } from '@/services/catService';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
+import { useRouter } from 'next/navigation';
 
 const DEFAULT_CAT: Readonly<Cat> = {
     name: 'Pawmo',
@@ -39,6 +40,7 @@ export function CatProvider({ children }: CatProviderProps) {
     const [isLoading, setIsLoading] = useState(false);
     const { user, refreshTokens, logout, needsTokenRefresh } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
 
     const loadCats = useCallback(async () => {
         if (!user?.username || !user?.accessToken) {
@@ -105,7 +107,22 @@ export function CatProvider({ children }: CatProviderProps) {
 
     const deleteCatByName = useCallback(
         async (catName: string) => {
-            if (!user?.username || !user?.accessToken) return;
+            if (!user?.username || !user?.accessToken) {
+                toast({
+                    title: 'Must be logged in to delete a cat',
+                    description:
+                        'Create an account to keep your cats, save your settings settings, and see your study habits.',
+                    action: (
+                        <ToastAction
+                            altText='Sign up'
+                            onClick={() => router.push('/signup')}
+                        >
+                            Sign up
+                        </ToastAction>
+                    ),
+                });
+                return;
+            }
 
             setIsLoading(true);
             try {
@@ -131,7 +148,7 @@ export function CatProvider({ children }: CatProviderProps) {
                 setIsLoading(false);
             }
         },
-        [user, toast, loadCats, refreshTokens, needsTokenRefresh]
+        [user, toast, loadCats, refreshTokens, needsTokenRefresh, router]
     );
 
     useEffect(() => {
