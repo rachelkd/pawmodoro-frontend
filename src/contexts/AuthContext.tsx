@@ -43,6 +43,25 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
+ * Helper function to store authentication data in localStorage
+ * @param user The user data to store
+ */
+function storeAuthData(user: User): void {
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, user.accessToken);
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, user.refreshToken);
+}
+
+/**
+ * Helper function to clear authentication data from localStorage
+ */
+function clearAuthData(): void {
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+}
+
+/**
  * Makes a request to login the user
  * @param username The username
  * @param password The password
@@ -52,13 +71,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 async function loginToBackend(
     username: string,
     password: string
-): Promise<{
-    username: string;
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-    expiresAt: number;
-}> {
+): Promise<User> {
     const response = await fetch(`${API_URL}/api/users/login`, {
         method: 'POST',
         headers: {
@@ -102,13 +115,7 @@ async function signupToBackend(
     email: string,
     password: string,
     confirmPassword: string
-): Promise<{
-    username: string;
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-    expiresAt: number;
-}> {
+): Promise<User> {
     const response = await fetch(`${API_URL}/api/users/signup`, {
         method: 'POST',
         headers: {
@@ -211,8 +218,10 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     const login = useCallback(
         async (username: string, password: string) => {
-            const data = await loginToBackend(username, password);
-            setUser(data);
+            const userData = await loginToBackend(username, password);
+            // Store auth data immediately after successful login
+            storeAuthData(userData);
+            setUser(userData);
             router.push('/');
         },
         [router]
@@ -225,13 +234,15 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
             password: string,
             confirmPassword: string
         ) => {
-            const data = await signupToBackend(
+            const userData = await signupToBackend(
                 username,
                 email,
                 password,
                 confirmPassword
             );
-            setUser(data);
+            // Store auth data immediately after successful signup
+            storeAuthData(userData);
+            setUser(userData);
             router.push('/');
         },
         [router]
@@ -245,11 +256,9 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
         } catch (error) {
             console.error('Error during logout:', error);
         } finally {
-            // Clear local state even if backend logout fails
+            // Clear local state and storage even if backend logout fails
             setUser(null);
-            localStorage.removeItem(STORAGE_KEYS.USER);
-            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-            localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+            clearAuthData();
             // Redirect to login page
             router.push('/login');
         }
@@ -261,22 +270,20 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
         try {
             const newTokens = await refreshTokensFromBackend(user.refreshToken);
-            setUser((currentUser) =>
-                currentUser
-                    ? {
-                          ...currentUser,
-                          accessToken: newTokens.accessToken,
-                          refreshToken: newTokens.refreshToken,
-                          expiresAt: newTokens.expiresAt,
-                          expiresIn: newTokens.expiresIn,
-                      }
-                    : null
-            );
+            const updatedUser = {
+                ...user,
+                accessToken: newTokens.accessToken,
+                refreshToken: newTokens.refreshToken,
+                expiresAt: newTokens.expiresAt,
+                expiresIn: newTokens.expiresIn,
+            };
+            storeAuthData(updatedUser);
+            setUser(updatedUser);
         } catch (error) {
             console.error('Failed to refresh tokens:', error);
             await logout();
         }
-    }, [user?.refreshToken, logout]);
+    }, [user, logout]);
 
     // Set up automatic token refresh
     useEffect(() => {
@@ -310,15 +317,6 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
         }
         setIsLoading(false);
     }, []);
-
-    // Update localStorage whenever user state changes
-    useEffect(() => {
-        if (user) {
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, user.accessToken);
-            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, user.refreshToken);
-        }
-    }, [user]);
 
     const value = useMemo(
         () => ({

@@ -48,6 +48,7 @@ export function CatProvider({ children }: CatProviderProps) {
 
         setIsLoading(true);
         try {
+            console.log('Loading cats for:', user.username);
             if (needsTokenRefresh()) {
                 await refreshTokens();
             }
@@ -64,10 +65,7 @@ export function CatProvider({ children }: CatProviderProps) {
                         description:
                             'Failed to load cats. Please check your internet connection and try again.',
                     });
-                } else if (
-                    err.message.includes('Invalid token') ||
-                    err.message.includes('expired')
-                ) {
+                } else if (err.message.includes('Invalid token')) {
                     try {
                         await refreshTokens();
                         const response = await fetchUserCats(user.username);
