@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSettingsContext } from '@/contexts/SettingsContext';
+import { useToast } from '@/hooks/use-toast';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -21,6 +22,7 @@ export function Timer({
     onComplete,
 }: Readonly<TimerProps>) {
     const { settings } = useSettingsContext();
+    const { toast } = useToast();
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [isCompleting, setIsCompleting] = useState(false);
 
@@ -41,7 +43,35 @@ export function Timer({
     useEffect(() => {
         setTimeLeft(getInitialTime());
         setIsCompleting(false);
-    }, [getInitialTime, timerType]);
+
+        const getSessionName = (type: TimerType): string => {
+            switch (type) {
+                case 'focus':
+                    return 'Focus Session';
+                case 'shortBreak':
+                    return 'Short Break';
+                case 'longBreak':
+                    return 'Long Break';
+            }
+        };
+
+        const getSessionDescription = (type: TimerType): string => {
+            switch (type) {
+                case 'focus':
+                    return 'Time to focus.';
+                case 'shortBreak':
+                    return 'Time to take a break!';
+                case 'longBreak':
+                    return 'Congrats on completing your focus session! You deserve a long break.';
+            }
+        };
+
+        toast({
+            title: getSessionName(timerType),
+            description: getSessionDescription(timerType),
+            duration: 3000,
+        });
+    }, [getInitialTime, timerType, toast]);
 
     // Handle countdown timer
     useEffect(() => {
