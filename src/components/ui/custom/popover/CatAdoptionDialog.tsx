@@ -99,7 +99,8 @@ export function CatAdoptionDialog({
                 <AlertDialogHeader>
                     <AlertDialogTitle>Adopt a Cat</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Choose your new feline friend and give them a name.
+                        Congrats on completing your focus session! Choose your
+                        new feline friend and give them a name.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
