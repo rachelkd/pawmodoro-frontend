@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/timer/Header';
 import { Timer } from '@/components/timer/Timer';
 import { SessionIndicator } from '@/components/timer/SessionIndicator';
@@ -14,6 +14,7 @@ import { useSettingsContext } from '@/contexts/SettingsContext';
 export default function Home() {
     const [mounted, setMounted] = useState(false);
     const [isAdoptionOpen, setIsAdoptionOpen] = useState(false);
+    const [shouldAdvanceSession, setShouldAdvanceSession] = useState(false);
 
     const {
         isPlaying,
@@ -31,9 +32,23 @@ export default function Home() {
         setMounted(true);
     }, []);
 
-    const handleTimerComplete = useCallback(() => {
-        handleNext(true);
-    }, [handleNext]);
+    const handleTimerComplete = () => {
+        // If it's a focus session, open the adoption dialog
+        if (timerType === 'focus') {
+            setIsAdoptionOpen(true);
+            setShouldAdvanceSession(true);
+        } else {
+            handleNext(true);
+        }
+    };
+
+    const handleAdoptionDialogClose = (open: boolean) => {
+        setIsAdoptionOpen(open);
+        if (!open && shouldAdvanceSession) {
+            handleNext(true);
+            setShouldAdvanceSession(false);
+        }
+    };
 
     useEffect(() => {
         if (!mounted || !isAutoChange) return;
@@ -87,7 +102,7 @@ export default function Home() {
                 </div>
                 <CatAdoptionDialog
                     open={isAdoptionOpen}
-                    onOpenChange={setIsAdoptionOpen}
+                    onOpenChange={handleAdoptionDialogClose}
                 />
             </main>
             <Footer />
