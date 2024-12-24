@@ -1,23 +1,48 @@
 import { Cat } from '@/interfaces/Cat';
 import { CatCard } from './CatCard';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { CatStatsModal } from './CatStatsModal';
-
-interface CatContainerProps {
-    cats: Cat[];
-}
+import { useCats } from '@/contexts/CatContext';
 
 interface Position {
     x: number;
     velocityX: number;
 }
 
-export const CatContainer = ({ cats }: CatContainerProps) => {
+export const CatContainer = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [positions, setPositions] = useState<Position[]>([]);
     const [selectedCat, setSelectedCat] = useState<Cat | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const CAT_WIDTH = 100; // Width of cat in pixels
+    const { cats } = useCats();
+    const CAT_WIDTH = 100;
+
+    const calculateNewPosition = (pos: Position, maxX: number): Position => {
+        let newX = pos.x + pos.velocityX;
+        let newVelocityX = pos.velocityX;
+
+        if (newX >= maxX) {
+            newX = maxX;
+            newVelocityX = -Math.abs(newVelocityX);
+        } else if (newX <= 0) {
+            newX = 0;
+            newVelocityX = Math.abs(newVelocityX);
+        }
+
+        return {
+            x: newX,
+            velocityX: newVelocityX,
+        };
+    };
+
+    const updatePositions = useCallback(() => {
+        if (!containerRef.current) return;
+        const containerWidth = containerRef.current.offsetWidth;
+        const maxX = containerWidth - CAT_WIDTH;
+        setPositions((prevPositions) =>
+            prevPositions.map((pos) => calculateNewPosition(pos, maxX))
+        );
+    }, []);
 
     useEffect(() => {
         const initialPositions = cats.map((_, index) => ({
@@ -26,36 +51,9 @@ export const CatContainer = ({ cats }: CatContainerProps) => {
         }));
         setPositions(initialPositions);
 
-        const updatePositions = () => {
-            if (!containerRef.current) return;
-
-            const containerWidth = containerRef.current.offsetWidth;
-            const maxX = containerWidth - CAT_WIDTH;
-
-            setPositions((prevPositions) =>
-                prevPositions.map((pos) => {
-                    let newX = pos.x + pos.velocityX;
-                    let newVelocityX = pos.velocityX;
-
-                    if (newX >= maxX) {
-                        newX = maxX;
-                        newVelocityX = -Math.abs(newVelocityX);
-                    } else if (newX <= 0) {
-                        newX = 0;
-                        newVelocityX = Math.abs(newVelocityX);
-                    }
-
-                    return {
-                        x: newX,
-                        velocityX: newVelocityX,
-                    };
-                })
-            );
-        };
-
         const animationInterval = setInterval(updatePositions, 16);
         return () => clearInterval(animationInterval);
-    }, [cats]);
+    }, [cats, updatePositions]);
 
     const handleCatClick = (cat: Cat) => {
         setSelectedCat(cat);
