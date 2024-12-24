@@ -26,7 +26,6 @@ export function Footer({
                     trigger={
                         <Button
                             variant='ghost'
-                            size='icon'
                             className='h-12 w-12 [&_svg]:size-6'
                             disabled={isLoading}
                         >
@@ -36,7 +35,6 @@ export function Footer({
                 />
                 <Button
                     variant='ghost'
-                    size='icon'
                     className='h-12 w-12 [&_svg]:size-6'
                     onClick={onSpotifyClick}
                 >
@@ -44,7 +42,6 @@ export function Footer({
                 </Button>
                 <Button
                     variant='ghost'
-                    size='icon'
                     className='h-12 w-12 [&_svg]:size-6'
                     onClick={onStatsClick}
                 >
@@ -53,7 +50,6 @@ export function Footer({
             </div>
             <Button
                 variant='ghost'
-                size='icon'
                 className='h-12 w-12 [&_svg]:size-6'
                 onClick={onInventoryClick}
             >
