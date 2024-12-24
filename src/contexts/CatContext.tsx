@@ -37,7 +37,7 @@ interface CatProviderProps {
 export function CatProvider({ children }: CatProviderProps) {
     const [cats, setCats] = useState<ReadonlyArray<Cat>>([DEFAULT_CAT]);
     const [isLoading, setIsLoading] = useState(false);
-    const { user, logout } = useAuth();
+    const { user, refreshTokens, logout, needsTokenRefresh } = useAuth();
     const { toast } = useToast();
 
     const loadCats = useCallback(async () => {
@@ -48,6 +48,10 @@ export function CatProvider({ children }: CatProviderProps) {
 
         setIsLoading(true);
         try {
+            if (needsTokenRefresh()) {
+                await refreshTokens();
+            }
+
             const response = await fetchUserCats(user.username);
             setCats(response.cats);
         } catch (err: unknown) {
@@ -75,7 +79,7 @@ export function CatProvider({ children }: CatProviderProps) {
         } finally {
             setIsLoading(false);
         }
-    }, [user, toast, logout]);
+    }, [user, toast, refreshTokens, needsTokenRefresh]);
 
     const deleteCatByName = useCallback(
         async (catName: string) => {
@@ -83,6 +87,10 @@ export function CatProvider({ children }: CatProviderProps) {
 
             setIsLoading(true);
             try {
+                if (needsTokenRefresh()) {
+                    await refreshTokens();
+                }
+
                 await deleteCat(user.username, catName);
                 await loadCats(); // Refresh the cats list after deletion
                 toast({
@@ -100,12 +108,12 @@ export function CatProvider({ children }: CatProviderProps) {
                 setIsLoading(false);
             }
         },
-        [user, toast, loadCats]
+        [user, toast, loadCats, refreshTokens, needsTokenRefresh]
     );
 
     useEffect(() => {
         loadCats();
-    }, [loadCats]); // Now we can safely add loadCats as a dependency
+    }, [loadCats]);
 
     const contextValue = useMemo(
         () => ({

@@ -37,6 +37,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     isLoading: boolean;
     refreshTokens: () => Promise<void>;
+    needsTokenRefresh: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -201,6 +202,13 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
+    const needsTokenRefresh = useCallback(() => {
+        if (!user?.expiresAt || !user?.expiresIn) return false;
+
+        const now = Date.now() / 1000;
+        return user.expiresAt - now < user.expiresIn * 0.2;
+    }, [user?.expiresAt, user?.expiresIn]);
+
     const login = useCallback(
         async (username: string, password: string) => {
             const data = await loginToBackend(username, password);
@@ -260,12 +268,12 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
                           accessToken: newTokens.accessToken,
                           refreshToken: newTokens.refreshToken,
                           expiresAt: newTokens.expiresAt,
+                          expiresIn: newTokens.expiresIn,
                       }
                     : null
             );
         } catch (error) {
             console.error('Failed to refresh tokens:', error);
-            // If refresh fails, log out the user
             await logout();
         }
     }, [user?.refreshToken, logout]);
@@ -321,8 +329,17 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
             logout,
             isLoading,
             refreshTokens,
+            needsTokenRefresh,
         }),
-        [user, login, signup, logout, isLoading, refreshTokens]
+        [
+            user,
+            login,
+            signup,
+            logout,
+            isLoading,
+            refreshTokens,
+            needsTokenRefresh,
+        ]
     );
 
     return (
