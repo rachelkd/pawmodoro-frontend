@@ -44,17 +44,30 @@ export default function Home() {
             try {
                 const response = await fetchUserCats(user.username);
                 setCats(response.cats);
-            } catch (err) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Authentication Error',
-                    description: 'Failed to load cats. Please sign in again.',
-                    action: (
-                        <ToastAction altText='Sign out' onClick={logout}>
-                            Logout
-                        </ToastAction>
-                    ),
-                });
+            } catch (err: unknown) {
+                if (
+                    err instanceof Error &&
+                    err.message.includes('NetworkError')
+                ) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Network Error',
+                        description:
+                            'Failed to load cats. Please check your internet connection and try again.',
+                    });
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Authentication Error',
+                        description:
+                            'Failed to load cats. Please sign in again.',
+                        action: (
+                            <ToastAction altText='Sign out' onClick={logout}>
+                                Logout
+                            </ToastAction>
+                        ),
+                    });
+                }
                 console.error(err);
                 setCats([DEFAULT_CAT]);
             }
