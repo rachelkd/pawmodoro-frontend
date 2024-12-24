@@ -6,12 +6,15 @@ import { Timer } from '@/components/timer/Timer';
 import { SessionIndicator } from '@/components/timer/SessionIndicator';
 import { Controls } from '@/components/timer/Controls';
 import { Footer } from '@/components/timer/Footer';
+import { CatAdoptionDialog } from '@/components/ui/custom/popover/CatAdoptionDialog';
 import { CatContainer } from '@/components/cats/CatContainer';
 import { useTimer } from '@/hooks/useTimer';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 
 export default function Home() {
     const [mounted, setMounted] = useState(false);
+    const [isAdoptionOpen, setIsAdoptionOpen] = useState(false);
+
     const {
         isPlaying,
         timerType,
@@ -82,6 +85,10 @@ export default function Home() {
                         <CatContainer />
                     </div>
                 </div>
+                <CatAdoptionDialog
+                    open={isAdoptionOpen}
+                    onOpenChange={setIsAdoptionOpen}
+                />
             </main>
             <Footer />
         </div>
