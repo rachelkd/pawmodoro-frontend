@@ -28,8 +28,15 @@ const DEFAULT_SETTINGS: Settings = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Helper function to safely check if we're in a browser environment
+const isBrowser = () => typeof window !== 'undefined';
+
 // Helper function to get settings from localStorage
 const getStoredSettings = (): Settings => {
+    if (!isBrowser()) {
+        return DEFAULT_SETTINGS;
+    }
+
     try {
         const storedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
         return storedSettings ? JSON.parse(storedSettings) : DEFAULT_SETTINGS;
@@ -41,6 +48,10 @@ const getStoredSettings = (): Settings => {
 
 // Update the getUserData helper function
 const getUserData = (): User | null => {
+    if (!isBrowser()) {
+        return null;
+    }
+
     try {
         const userData = localStorage.getItem(STORAGE_KEYS.USER);
         if (!userData) return null;
