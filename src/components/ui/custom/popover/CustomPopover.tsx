@@ -32,7 +32,7 @@ export function CustomPopover({
                 side={side}
                 align={align}
                 className={cn(
-                    'w-80 bg-popover/10 backdrop-blur-md p-4 border-none',
+                    'w-80 bg-popover/10 backdrop-blur-md p-4 border-white/10',
                     contentClassName
                 )}
             >
