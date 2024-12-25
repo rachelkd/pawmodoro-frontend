@@ -8,7 +8,7 @@ import { Controls } from '@/components/timer/Controls';
 import { Footer } from '@/components/timer/Footer';
 import { CatAdoptionDialog } from '@/components/ui/custom/popover/CatAdoptionDialog';
 import { CatContainer } from '@/components/cats/CatContainer';
-import { useTimer } from '@/hooks/useTimer';
+import { useTimer } from '@/hooks/use-timer';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useCats } from '@/contexts/CatContext';
 import { useAuth } from '@/contexts/AuthContext';
