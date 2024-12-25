@@ -16,7 +16,7 @@ export function UserProfile() {
                 <Button
                     variant='outline'
                     size='icon'
-                    className='group relative hover:w-[5.5rem] hover:px-4 hover:size-default transition-[width,padding] duration-200 overflow-hidden'
+                    className='group relative sm:hover:w-[5.5rem] sm:hover:px-4 smhover:size-default transition-[width,padding] duration-200 overflow-hidden'
                 >
                     <div className='absolute inset-0 flex items-center justify-center group-hover:justify-start group-hover:pl-3 transition-all duration-200'>
                         <LogIn />
@@ -39,7 +39,7 @@ export function UserProfile() {
             <Button
                 variant='outline'
                 size='icon'
-                className='group relative hover:w-[6rem] hover:px-4 hover:size-default transition-[width,padding] duration-200 overflow-hidden'
+                className='group relative sm:hover:w-[6rem] sm:hover:px-4 sm:hover:size-default transition-[width,padding] duration-200 overflow-hidden'
                 onClick={logout}
             >
                 <div className='absolute inset-0 flex items-center justify-center group-hover:justify-start group-hover:pl-3 transition-all duration-200'>
