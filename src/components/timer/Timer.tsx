@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
+import { useCatContext } from '@/contexts/CatContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateAllCatsHappinessAfterStudy } from '@/services/CatService';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -23,6 +26,8 @@ export function Timer({
 }: Readonly<TimerProps>) {
     const { settings } = useSettingsContext();
     const { toast } = useToast();
+    const { cats, refreshCats } = useCatContext();
+    const { user } = useAuth();
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [isCompleting, setIsCompleting] = useState(false);
     const previousTimerType = useRef(timerType);
@@ -101,9 +106,44 @@ export function Timer({
     useEffect(() => {
         if (timeLeft === 0 && !isCompleting) {
             setIsCompleting(true);
+
+            // Only update cats' happiness after focus sessions
+            if (timerType === 'focus' && user?.username) {
+                updateAllCatsHappinessAfterStudy(user.username, cats)
+                    .then(() => {
+                        refreshCats();
+                        toast({
+                            title: 'Cats are happier!',
+                            description:
+                                'Your cats are happy you completed your study session.',
+                            duration: 3000,
+                        });
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'Failed to update cats happiness:',
+                            error
+                        );
+                        toast({
+                            title: 'Error',
+                            description: 'Failed to update cats happiness.',
+                            duration: 3000,
+                        });
+                    });
+            }
+
             onComplete?.();
         }
-    }, [timeLeft, onComplete, isCompleting]);
+    }, [
+        timeLeft,
+        onComplete,
+        isCompleting,
+        timerType,
+        user?.username,
+        cats,
+        refreshCats,
+        toast,
+    ]);
 
     if (timeLeft === null) {
         return <TimerDisplay minutes='--' seconds='--' />;

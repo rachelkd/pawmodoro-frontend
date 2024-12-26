@@ -1,4 +1,4 @@
-import { CatsResponse } from '@/interfaces/Cat';
+import { Cat, CatsResponse } from '@/interfaces/Cat';
 import { STORAGE_KEYS } from '@/constants/storage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -30,6 +30,30 @@ interface CatStatsResponse {
     hungerLevel: number;
     imageFileName: string;
 }
+
+/**
+ * The percentage by which cats' happiness increases after a study session
+ */
+export const STUDY_SESSION_HAPPINESS_INCREASE = 5;
+
+/**
+ * Updates the happiness level of all cats after completing a study session
+ * @param username - The username of the cat owner
+ * @param cats - The list of cats to update
+ * @returns Promise that resolves when all cats are updated
+ * @throws Error if any update fails
+ */
+export const updateAllCatsHappinessAfterStudy = async (
+    username: string,
+    cats: ReadonlyArray<Cat>
+): Promise<void> => {
+    const updatePromises = cats.map(cat => {
+        const changeAmount = Math.round((cat.happinessLevel * STUDY_SESSION_HAPPINESS_INCREASE) / 100);
+        return updateCatHappiness(username, cat.name, changeAmount);
+    });
+
+    await Promise.all(updatePromises);
+};
 
 /**
  * Fetches all cats for a given user
