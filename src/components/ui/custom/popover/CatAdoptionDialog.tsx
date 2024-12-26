@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { createCat } from '@/services/catService';
+import { createCat } from '@/services/CatService';
 import { useCats } from '@/contexts/CatContext';
 import {
     AlertDialog,

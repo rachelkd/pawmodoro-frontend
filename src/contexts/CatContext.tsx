@@ -8,7 +8,7 @@ import {
     useMemo,
 } from 'react';
 import { Cat } from '@/interfaces/Cat';
-import { fetchUserCats, deleteCat } from '@/services/catService';
+import { fetchUserCats, deleteCat } from '@/services/CatService';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';

@@ -21,13 +21,6 @@ interface CreateCatResponse {
 }
 
 /**
- * Interface for updating cat stats (happiness/hunger)
- */
-interface UpdateCatStatsRequest {
-    changeAmount: number;
-}
-
-/**
  * Interface for cat stats response
  */
 interface CatStatsResponse {
