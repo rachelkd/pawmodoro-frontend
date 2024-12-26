@@ -1,0 +1,22 @@
+name: Auto Label Pull Requests
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add Labels Based on Branch Name
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: |
+            ${{ 
+              contains(github.event.pull_request.head.ref, 'feature') && 'feature' || 
+              contains(github.event.pull_request.head.ref, 'bugfix') && 'bugfix' 
+            }}
