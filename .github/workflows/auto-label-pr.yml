@@ -22,5 +22,5 @@ jobs:
           labels: |
             ${{ 
               contains(github.event.pull_request.head.ref, 'feature') && 'feature' || 
-              contains(github.event.pull_request.head.ref, 'bugfix') && 'bugfix' 
+              contains(github.event.pull_request.head.ref, 'bug') && 'bug' 
             }}
