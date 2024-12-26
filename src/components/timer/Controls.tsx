@@ -24,7 +24,7 @@ export function Controls({
                 className='bg-white/20 hover:bg-white/30 text-white rounded-full w-12 h-12'
                 onClick={onPrevious}
             >
-                <SkipBack className='h-5 w-5' />
+                <SkipBack className='h-5 w-5' fill='currentColor' />
             </Button>
             <Button
                 variant='secondary'
@@ -33,9 +33,9 @@ export function Controls({
                 onClick={onPlayPause}
             >
                 {isPlaying ? (
-                    <Pause className='h-5 w-5' />
+                    <Pause className='h-5 w-5' fill='currentColor' />
                 ) : (
-                    <Play className='h-5 w-5' />
+                    <Play className='h-5 w-5' fill='currentColor' />
                 )}
             </Button>
             <Button
@@ -44,7 +44,7 @@ export function Controls({
                 className='bg-white/20 hover:bg-white/30 text-white rounded-full w-12 h-12'
                 onClick={() => onNext?.(false)}
             >
-                <SkipForward className='h-5 w-5' />
+                <SkipForward className='h-5 w-5' fill='currentColor' />
             </Button>
         </div>
     );
