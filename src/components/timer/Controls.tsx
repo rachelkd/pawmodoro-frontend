@@ -19,17 +19,17 @@ export function Controls({
     return (
         <div className='flex gap-4'>
             <Button
-                variant='secondary'
+                variant='ghost'
                 size='icon'
-                className='bg-white/20 hover:bg-white/30 text-white rounded-full w-12 h-12'
+                className='bg-white/20 text-white rounded-full w-12 h-12'
                 onClick={onPrevious}
             >
                 <SkipBack className='h-5 w-5' fill='currentColor' />
             </Button>
             <Button
-                variant='secondary'
+                variant='ghost'
                 size='icon'
-                className='bg-white/20 hover:bg-white/30 text-white rounded-full w-12 h-12'
+                className='bg-white/20 text-white rounded-full w-12 h-12'
                 onClick={onPlayPause}
             >
                 {isPlaying ? (
@@ -39,9 +39,9 @@ export function Controls({
                 )}
             </Button>
             <Button
-                variant='secondary'
+                variant='ghost'
                 size='icon'
-                className='bg-white/20 hover:bg-white/30 text-white rounded-full w-12 h-12'
+                className='bg-white/20 text-white rounded-full w-12 h-12'
                 onClick={() => onNext?.(false)}
             >
                 <SkipForward className='h-5 w-5' fill='currentColor' />
