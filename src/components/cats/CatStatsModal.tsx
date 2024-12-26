@@ -4,6 +4,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
 import {
     AlertDialog,
@@ -104,6 +105,7 @@ export const CatStatsModal = ({ cat, isOpen, onClose }: CatStatsModalProps) => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{cat.name}</DialogTitle>
+                        <DialogDescription></DialogDescription>
                     </DialogHeader>
 
                     <div className='space-y-4'>
