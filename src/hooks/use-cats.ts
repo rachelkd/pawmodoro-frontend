@@ -63,7 +63,7 @@ export function useCats(): UseCatsReturn {
     const deleteCatByName = useCallback(
         async (catName: string) => {
             if (!user?.username || !user?.accessToken) {
-                throw CatError.authError('Must be logged in to delete a cat');
+                throw CatError.authError();
             }
 
             setIsLoading(true);

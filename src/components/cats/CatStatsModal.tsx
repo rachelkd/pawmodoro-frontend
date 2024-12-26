@@ -45,8 +45,6 @@ export const CatStatsModal = ({ cat, isOpen, onClose }: CatStatsModalProps) => {
                 title: 'Cat Deleted',
                 description: `${cat.name} has been deleted.`,
             });
-            setShowDeleteAlert(false);
-            onClose();
         } catch (err) {
             if (err instanceof CatError) {
                 if (err.message.includes('Authentication required')) {
@@ -96,6 +94,9 @@ export const CatStatsModal = ({ cat, isOpen, onClose }: CatStatsModalProps) => {
                 });
             }
             console.error(err);
+        } finally {
+            setShowDeleteAlert(false);
+            onClose();
         }
     };
 
