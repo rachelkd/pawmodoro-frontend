@@ -143,21 +143,11 @@ export function CatAdoptionDialog({
                             'Please check your internet connection and try again.',
                     });
                 } else {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Error',
-                        description: err.message,
-                    });
+                    setError(err.message);
                 }
-                setError(err.message);
             } else {
                 const errorMessage =
                     err instanceof Error ? err.message : 'Failed to adopt cat';
-                toast({
-                    variant: 'destructive',
-                    title: 'Error',
-                    description: errorMessage,
-                });
                 setError(errorMessage);
             }
             console.error(err);
@@ -244,7 +234,7 @@ export function CatAdoptionDialog({
                     </div>
 
                     {error && (
-                        <p className='text-sm text-destructive text-center'>
+                        <p className='text-sm text-red-400 text-center'>
                             {error}
                         </p>
                     )}
