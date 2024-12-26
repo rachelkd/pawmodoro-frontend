@@ -21,6 +21,24 @@ interface CreateCatResponse {
 }
 
 /**
+ * Interface for updating cat stats (happiness/hunger)
+ */
+interface UpdateCatStatsRequest {
+    changeAmount: number;
+}
+
+/**
+ * Interface for cat stats response
+ */
+interface CatStatsResponse {
+    catName: string;
+    ownerUsername: string;
+    happinessLevel: number;
+    hungerLevel: number;
+    imageFileName: string;
+}
+
+/**
  * Fetches all cats for a given user
  * @param username - The username of the cat owner
  * @returns Promise containing the cats response
@@ -97,4 +115,64 @@ export const deleteCat = async (username: string, catName: string): Promise<void
     if (!response.ok) {
         throw new Error('Failed to delete cat');
     }
+};
+
+/**
+ * Updates the happiness level of a cat
+ * @param username - The username of the cat owner
+ * @param catName - The name of the cat
+ * @param changeAmount - The amount to change the happiness level by (positive or negative)
+ * @returns Promise containing the updated cat stats
+ * @throws Error if the update fails
+ */
+export const updateCatHappiness = async (
+    username: string, 
+    catName: string, 
+    changeAmount: number
+): Promise<CatStatsResponse> => {
+    const response = await fetch(`${API_URL}/api/cats/${username}/${catName}/happiness`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ changeAmount }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update cat happiness');
+    }
+
+    return response.json();
+};
+
+/**
+ * Updates the hunger level of a cat
+ * @param username - The username of the cat owner
+ * @param catName - The name of the cat
+ * @param changeAmount - The amount to change the hunger level by (positive or negative)
+ * @returns Promise containing the updated cat stats
+ * @throws Error if the update fails
+ */
+export const updateCatHunger = async (
+    username: string, 
+    catName: string, 
+    changeAmount: number
+): Promise<CatStatsResponse> => {
+    const response = await fetch(`${API_URL}/api/cats/${username}/${catName}/hunger`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ changeAmount }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update cat hunger');
+    }
+
+    return response.json();
 }; 
