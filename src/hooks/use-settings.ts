@@ -1,14 +1,8 @@
 import { STORAGE_KEYS } from '@/constants/storage';
 import { useState, useCallback, useEffect } from 'react';
 import { User } from '@/interfaces/User';
-
-interface Settings {
-    focusDuration: number;
-    shortBreakDuration: number;
-    longBreakDuration: number;
-    autoStartBreaks: boolean;
-    autoStartFocus: boolean;
-}
+import { Settings, DEFAULT_SETTINGS } from '@/interfaces/Settings';
+import { fetchUserSettings, updateUserSettings } from '@/services/settingsService';
 
 interface UseSettingsReturn {
     settings: Settings;
@@ -17,16 +11,6 @@ interface UseSettingsReturn {
     saveSettings: (newSettings: Settings) => Promise<void>;
     loadSettings: () => Promise<void>;
 }
-
-const DEFAULT_SETTINGS: Settings = {
-    focusDuration: 25,
-    shortBreakDuration: 5,
-    longBreakDuration: 15,
-    autoStartBreaks: false,
-    autoStartFocus: false,
-};
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Helper function to safely check if we're in a browser environment
 const isBrowser = () => typeof window !== 'undefined';
@@ -84,30 +68,10 @@ export function useSettings(username?: string): UseSettingsReturn {
                 return;
             }
 
-            const response = await fetch(`${API_URL}/api/settings/${username}`, {
-                headers: { Authorization: `Bearer ${userData.accessToken}` },
-            });
-
-            if (!response.ok) {
-                throw new Error(
-                    response.status === 401
-                        ? 'Authentication failed - please sign out and log in again'
-                        : 'Failed to fetch settings'
-                );
-            }
-
-            const data = await response.json();
-            // Extract only the settings fields we need
-            const settingsToStore = {
-                focusDuration: data.focusDuration,
-                shortBreakDuration: data.shortBreakDuration,
-                longBreakDuration: data.longBreakDuration,
-                autoStartBreaks: data.autoStartBreaks,
-                autoStartFocus: data.autoStartFocus,
-            };
-            setSettings(settingsToStore);
+            const settingsData = await fetchUserSettings(username, userData.accessToken);
+            setSettings(settingsData);
             // Also update localStorage for offline access
-            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settingsToStore));
+            localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settingsData));
         } catch (err) {
             console.error('Failed to fetch settings:', err);
             setError(err instanceof Error ? err.message : 'An error occurred. Please check your internet connection and try again.');
@@ -144,22 +108,7 @@ export function useSettings(username?: string): UseSettingsReturn {
             const userData = getUserData();
             if (!userData?.accessToken) throw new Error('Authentication failed. Please sign out and log in again.');
 
-            const response = await fetch(`${API_URL}/api/settings/${username}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${userData.accessToken}`,
-                },
-                body: JSON.stringify(newSettings),
-            });
-
-            if (!response.ok) {
-                throw new Error(
-                    response.status === 401
-                        ? 'Authentication failed. Please sign out and log in again.'
-                        : 'Failed to update settings.'
-                );
-            }
+            await updateUserSettings(username, userData.accessToken, newSettings);
         } catch (err) {
             setSettings(previousSettings);
             localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(previousSettings));
