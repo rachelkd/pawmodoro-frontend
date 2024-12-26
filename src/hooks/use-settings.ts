@@ -2,7 +2,7 @@ import { STORAGE_KEYS } from '@/constants/storage';
 import { useState, useCallback, useEffect } from 'react';
 import { User } from '@/interfaces/User';
 import { Settings, DEFAULT_SETTINGS } from '@/interfaces/Settings';
-import { fetchUserSettings, updateUserSettings } from '@/services/settingsService';
+import { fetchUserSettings, updateUserSettings } from '@/services/SettingsService';
 
 interface UseSettingsReturn {
     settings: Settings;

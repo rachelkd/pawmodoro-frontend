@@ -7,7 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCat } from '@/services/CatService';
-import { useCats } from '@/contexts/CatContext';
+import { useCatContext } from '@/contexts/CatContext';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import { useRouter } from 'next/navigation';
+import { CatError } from '@/errors/CatError';
 import {
     AlertDialog,
     AlertDialogContent,
@@ -39,12 +43,15 @@ export function CatAdoptionDialog({
     onSuccess,
 }: CatAdoptionDialogProps) {
     const { user } = useAuth();
-    const { refreshCats, cats } = useCats();
+    const { refreshCats, cats } = useCatContext();
     const [catName, setCatName] = useState('');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [direction, setDirection] = useState<'left' | 'right'>('right');
+    const { toast } = useToast();
+    const { logout } = useAuth();
+    const router = useRouter();
 
     const handlePrevious = () => {
         setDirection('left');
@@ -63,6 +70,19 @@ export function CatAdoptionDialog({
     const handleSubmit = async () => {
         if (!user?.username) {
             setError('You must be logged in to adopt a cat');
+            toast({
+                title: 'Must be logged in',
+                description:
+                    'Create an account to keep your cats, save your settings, and see your study habits.',
+                action: (
+                    <ToastAction
+                        altText='Sign up'
+                        onClick={() => router.push('/signup')}
+                    >
+                        Sign up
+                    </ToastAction>
+                ),
+            });
             return;
         }
 
@@ -84,10 +104,63 @@ export function CatAdoptionDialog({
             setCatName('');
             setCurrentImageIndex(0);
             onSuccess?.();
+            toast({
+                title: 'Cat Adopted',
+                description: `${catName} has joined your family!`,
+            });
         } catch (err) {
-            setError(
-                err instanceof Error ? err.message : 'Failed to adopt cat'
-            );
+            if (err instanceof CatError) {
+                if (err.message.includes('Authentication required')) {
+                    toast({
+                        title: 'Must be logged in',
+                        description:
+                            'Create an account to keep your cats, save your settings, and see your study habits.',
+                        action: (
+                            <ToastAction
+                                altText='Sign up'
+                                onClick={() => router.push('/signup')}
+                            >
+                                Sign up
+                            </ToastAction>
+                        ),
+                    });
+                } else if (err.message.includes('Invalid or expired token')) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Authentication Error',
+                        description: 'Please sign in again.',
+                        action: (
+                            <ToastAction altText='Sign out' onClick={logout}>
+                                Logout
+                            </ToastAction>
+                        ),
+                    });
+                } else if (err.message.includes('Network error')) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Network Error',
+                        description:
+                            'Please check your internet connection and try again.',
+                    });
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Error',
+                        description: err.message,
+                    });
+                }
+                setError(err.message);
+            } else {
+                const errorMessage =
+                    err instanceof Error ? err.message : 'Failed to adopt cat';
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: errorMessage,
+                });
+                setError(errorMessage);
+            }
+            console.error(err);
         } finally {
             setIsSubmitting(false);
         }

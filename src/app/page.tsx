@@ -10,7 +10,7 @@ import { CatAdoptionDialog } from '@/components/ui/custom/popover/CatAdoptionDia
 import { CatContainer } from '@/components/cats/CatContainer';
 import { useTimer } from '@/hooks/use-timer';
 import { useSettingsContext } from '@/contexts/SettingsContext';
-import { useCats } from '@/contexts/CatContext';
+import { useCatContext } from '@/contexts/CatContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
@@ -18,7 +18,7 @@ export default function Home() {
     const [isAdoptionOpen, setIsAdoptionOpen] = useState(false);
     const [shouldAdvanceSession, setShouldAdvanceSession] = useState(false);
 
-    const { cats } = useCats();
+    const { cats } = useCatContext();
     const { user } = useAuth();
 
     const {

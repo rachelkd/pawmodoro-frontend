@@ -16,8 +16,13 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { useCats } from '@/contexts/CatContext';
+import { useCatContext } from '@/contexts/CatContext';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { CatError } from '@/errors/CatError';
 
 interface CatStatsModalProps {
     cat: Cat;
@@ -27,12 +32,70 @@ interface CatStatsModalProps {
 
 export const CatStatsModal = ({ cat, isOpen, onClose }: CatStatsModalProps) => {
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-    const { deleteCatByName: deleteCatById } = useCats();
+    const { deleteCatByName } = useCatContext();
+    const { toast } = useToast();
+    const router = useRouter();
+    const { logout } = useAuth();
 
     const handleDelete = async () => {
-        await deleteCatById(cat.name);
-        setShowDeleteAlert(false);
-        onClose();
+        try {
+            await deleteCatByName(cat.name);
+            toast({
+                title: 'Cat Deleted',
+                description: `${cat.name} has been deleted.`,
+            });
+            setShowDeleteAlert(false);
+            onClose();
+        } catch (err) {
+            if (err instanceof CatError) {
+                if (err.message.includes('Authentication required')) {
+                    toast({
+                        title: 'Must be logged in',
+                        description:
+                            'Create an account to keep your cats, save your settings, and see your study habits.',
+                        action: (
+                            <ToastAction
+                                altText='Sign up'
+                                onClick={() => router.push('/signup')}
+                            >
+                                Sign up
+                            </ToastAction>
+                        ),
+                    });
+                } else if (err.message.includes('Invalid or expired token')) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Authentication Error',
+                        description: 'Please sign in again.',
+                        action: (
+                            <ToastAction altText='Sign out' onClick={logout}>
+                                Logout
+                            </ToastAction>
+                        ),
+                    });
+                } else if (err.message.includes('Network error')) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Network Error',
+                        description:
+                            'Please check your internet connection and try again.',
+                    });
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Error',
+                        description: err.message,
+                    });
+                }
+            } else {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'An unexpected error occurred.',
+                });
+            }
+            console.error(err);
+        }
     };
 
     return (

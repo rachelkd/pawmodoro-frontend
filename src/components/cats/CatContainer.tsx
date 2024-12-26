@@ -2,7 +2,7 @@ import { Cat } from '@/interfaces/Cat';
 import { CatCard } from './CatCard';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { CatStatsModal } from './CatStatsModal';
-import { useCats } from '@/contexts/CatContext';
+import { useCatContext } from '@/contexts/CatContext';
 
 interface Position {
     x: number;
@@ -14,7 +14,7 @@ export const CatContainer = () => {
     const [positions, setPositions] = useState<Position[]>([]);
     const [selectedCat, setSelectedCat] = useState<Cat | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { cats } = useCats();
+    const { cats } = useCatContext();
     const CAT_WIDTH = 100;
 
     const calculateNewPosition = (pos: Position, maxX: number): Position => {
