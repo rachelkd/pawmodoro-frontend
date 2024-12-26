@@ -63,7 +63,7 @@ export const fetchUserCats = async (username: string): Promise<CatsResponse> => 
 export const createCat = async (username: string, catData: CreateCatRequest): Promise<CreateCatResponse> => {
     // Validate cat name (letters only, 1-20 chars)
     if (!/^[a-zA-Z]{1,20}$/.exec(catData.name)) {
-        throw new Error('Cat name must be 1-20 letters only');
+        throw new Error('Cat name must contain 1-20 letters');
     }
 
     // Validate image file name if provided
