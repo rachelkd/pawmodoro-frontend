@@ -40,6 +40,15 @@ interface UpdateCatsAfterStudyResponse {
 }
 
 /**
+ * Interface for the decrease cat stats on skip response
+ */
+interface DecreaseCatStatsOnSkipResponse {
+    updatedCat: Cat | null;
+    isDeleted: boolean;
+    message: string;
+}
+
+/**
  * Fetches all cats for a given user
  * @param username - The username of the cat owner
  * @returns Promise containing the cats response
@@ -194,6 +203,27 @@ export const updateAllCatsHappinessAfterStudy = async (): Promise<UpdateCatsAfte
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to update cats after study');
+    }
+
+    return response.json();
+};
+
+/**
+ * Decreases a random cat's stats when a study session is skipped
+ * @returns Promise containing the updated cat (or null if deleted), deletion status, and message
+ * @throws Error if the update fails
+ */
+export const decreaseCatStatsOnSkip = async (): Promise<DecreaseCatStatsOnSkipResponse> => {
+    const response = await fetch(`${API_URL}/api/cats/decrease-stats-on-skip`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
+        },
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to decrease cat stats');
     }
 
     return response.json();

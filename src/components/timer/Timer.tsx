@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCatContext } from '@/contexts/CatContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { updateAllCatsHappinessAfterStudy } from '@/services/CatService';
+import { useCats } from '@/hooks/use-cats';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -26,8 +25,8 @@ export function Timer({
 }: Readonly<TimerProps>) {
     const { settings } = useSettingsContext();
     const { toast } = useToast();
-    const { cats, refreshCats } = useCatContext();
-    const { user } = useAuth();
+    const { refreshCats } = useCatContext();
+    const { updateAllCatsHappinessAfterStudy } = useCats();
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [isCompleting, setIsCompleting] = useState(false);
     const previousTimerType = useRef(timerType);
@@ -152,10 +151,9 @@ export function Timer({
         onComplete,
         isCompleting,
         timerType,
-        user?.username,
-        cats,
         refreshCats,
         toast,
+        updateAllCatsHappinessAfterStudy,
     ]);
 
     if (timeLeft === null) {

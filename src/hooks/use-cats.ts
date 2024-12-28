@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Cat } from '@/interfaces/Cat';
-import { fetchUserCats, deleteCat } from '@/services/CatService';
+import * as CatService from '@/services/CatService';
 import { useAuth } from '@/contexts/AuthContext';
 import { CatError } from '@/errors/CatError';
 
@@ -17,6 +17,8 @@ interface UseCatsReturn {
     readonly isLoading: boolean;
     deleteCatByName: (catName: string) => Promise<void>;
     refreshCats: () => Promise<void>;
+    updateAllCatsHappinessAfterStudy: () => Promise<{ updatedCats: Array<Cat>; failures: Array<string> }>;
+    decreaseCatStatsOnSkip: () => Promise<{ updatedCat: Cat | null; isDeleted: boolean; message: string }>;
 }
 
 export function useCats(): UseCatsReturn {
@@ -36,7 +38,7 @@ export function useCats(): UseCatsReturn {
                 await refreshTokens();
             }
 
-            const response = await fetchUserCats(user.username);
+            const response = await CatService.fetchUserCats(user.username);
             setCats(response.cats);
         } catch (err) {
             if (err instanceof Error) {
@@ -46,7 +48,7 @@ export function useCats(): UseCatsReturn {
                 if (err.message.includes('Invalid token')) {
                     try {
                         await refreshTokens();
-                        const response = await fetchUserCats(user.username);
+                        const response = await CatService.fetchUserCats(user.username);
                         setCats(response.cats);
                         return;
                     } catch (refreshError) {
@@ -72,7 +74,7 @@ export function useCats(): UseCatsReturn {
                     await refreshTokens();
                 }
 
-                await deleteCat(user.username, catName);
+                await CatService.deleteCat(user.username, catName);
                 await loadCats();
             } catch (err) {
                 throw new CatError('Failed to delete cat', { cause: err as Error });
@@ -82,6 +84,48 @@ export function useCats(): UseCatsReturn {
         },
         [user, loadCats, refreshTokens, needsTokenRefresh]
     );
+
+    const updateAllCatsHappinessAfterStudy = useCallback(async () => {
+        if (!user?.accessToken) {
+            throw CatError.authError();
+        }
+
+        setIsLoading(true);
+        try {
+            if (needsTokenRefresh()) {
+                await refreshTokens();
+            }
+
+            const result = await CatService.updateAllCatsHappinessAfterStudy();
+            await loadCats(); // Refresh cats after update
+            return result;
+        } catch (err) {
+            throw new CatError('Failed to update cats after study', { cause: err as Error });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user?.accessToken, needsTokenRefresh, refreshTokens, loadCats]);
+
+    const decreaseCatStatsOnSkip = useCallback(async () => {
+        if (!user?.accessToken) {
+            throw CatError.authError();
+        }
+
+        setIsLoading(true);
+        try {
+            if (needsTokenRefresh()) {
+                await refreshTokens();
+            }
+
+            const result = await CatService.decreaseCatStatsOnSkip();
+            await loadCats(); // Refresh cats after update
+            return result;
+        } catch (err) {
+            throw new CatError('Failed to decrease cat stats', { cause: err as Error });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user?.accessToken, needsTokenRefresh, refreshTokens, loadCats]);
 
     useEffect(() => {
         loadCats().catch(() => {
@@ -102,7 +146,9 @@ export function useCats(): UseCatsReturn {
             isLoading,
             deleteCatByName,
             refreshCats: loadCats,
+            updateAllCatsHappinessAfterStudy,
+            decreaseCatStatsOnSkip,
         }),
-        [cats, isLoading, deleteCatByName, loadCats]
+        [cats, isLoading, deleteCatByName, loadCats, updateAllCatsHappinessAfterStudy, decreaseCatStatsOnSkip]
     );
 } 
