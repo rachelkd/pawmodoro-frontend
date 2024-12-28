@@ -82,7 +82,6 @@ export function Timer({
         toast({
             title: getSessionName(timerType),
             description: getSessionDescription(timerType),
-            duration: 3000,
         });
     }, [getInitialTime, timerType, toast]);
 
