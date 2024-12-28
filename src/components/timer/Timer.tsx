@@ -5,6 +5,7 @@ import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCatContext } from '@/contexts/CatContext';
 import { useCats } from '@/hooks/use-cats';
+import { ToastAction } from '@/components/ui/toast';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -12,6 +13,7 @@ interface TimerProps {
     readonly isPlaying: boolean;
     readonly timerType: TimerType;
     readonly onComplete?: () => void;
+    readonly onAdoptClick?: () => void;
 }
 
 /**
@@ -22,6 +24,7 @@ export function Timer({
     isPlaying,
     timerType,
     onComplete,
+    onAdoptClick,
 }: Readonly<TimerProps>) {
     const { settings } = useSettingsContext();
     const { toast } = useToast();
@@ -115,18 +118,34 @@ export function Timer({
                         const updatedCount = result.updatedCats.length;
                         const failureCount = result.failures.length;
 
-                        let description = `${updatedCount} ${
-                            updatedCount === 1 ? 'cat is' : 'cats are'
-                        } happier!`;
+                        let description = '';
+                        if (updatedCount > 0) {
+                            description = `${updatedCount} ${
+                                updatedCount === 1 ? 'cat is' : 'cats are'
+                            } happier!`;
+                        }
                         if (failureCount > 0) {
-                            description += ` (${failureCount} ${
+                            description += `${
+                                description ? ' ' : ''
+                            }(${failureCount} ${
                                 failureCount === 1 ? 'update' : 'updates'
                             } failed)`;
                         }
+                        description += `${
+                            description ? '\n' : ''
+                        }Want to adopt another cat to join your family?`;
 
                         toast({
-                            title: 'Study Session Complete',
+                            title: 'Great work!',
                             description,
+                            action: (
+                                <ToastAction
+                                    altText='Adopt a cat'
+                                    onClick={() => onAdoptClick?.()}
+                                >
+                                    Adopt a cat
+                                </ToastAction>
+                            ),
                         });
                     })
                     .catch((error) => {
@@ -153,6 +172,7 @@ export function Timer({
         refreshCats,
         toast,
         updateAllCatsHappinessAfterStudy,
+        onAdoptClick,
     ]);
 
     if (timeLeft === null) {

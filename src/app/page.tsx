@@ -74,20 +74,7 @@ export default function Home() {
     const handleTimerComplete = () => {
         if (timerType === 'focus') {
             if (user && cats.length > 0) {
-                // For users with cats: show toast and advance immediately
-                toast({
-                    title: 'Great work!',
-                    description:
-                        'Want to adopt another cat to join your family?',
-                    action: (
-                        <ToastAction
-                            altText='Adopt a cat'
-                            onClick={() => setIsAdoptionOpen(true)}
-                        >
-                            Adopt a cat
-                        </ToastAction>
-                    ),
-                });
+                // For users with cats: advance immediately
                 handleNext(true);
             } else if (user) {
                 // For new users: show dialog and advance after it closes
@@ -168,6 +155,7 @@ export default function Home() {
                             isPlaying={isPlaying}
                             timerType={timerType}
                             onComplete={handleTimerComplete}
+                            onAdoptClick={() => setIsAdoptionOpen(true)}
                         />
                         <SessionIndicator currentSession={currentSession} />
                         <Controls
