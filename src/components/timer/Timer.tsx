@@ -108,15 +108,27 @@ export function Timer({
             setIsCompleting(true);
 
             // Only update cats' happiness after focus sessions
-            if (timerType === 'focus' && user?.username) {
-                updateAllCatsHappinessAfterStudy(user.username, cats)
-                    .then(() => {
+            if (timerType === 'focus') {
+                updateAllCatsHappinessAfterStudy()
+                    .then((result) => {
                         refreshCats();
+
+                        // Show success message with count of updated cats
+                        const updatedCount = result.updatedCats.length;
+                        const failureCount = result.failures.length;
+
+                        let description = `${updatedCount} ${
+                            updatedCount === 1 ? 'cat is' : 'cats are'
+                        } happier!`;
+                        if (failureCount > 0) {
+                            description += ` (${failureCount} ${
+                                failureCount === 1 ? 'update' : 'updates'
+                            } failed)`;
+                        }
+
                         toast({
-                            title: 'Cats are happier!',
-                            description:
-                                'Your cats are happy you completed your study session.',
-                            duration: 3000,
+                            title: 'Study Session Complete',
+                            description,
                         });
                     })
                     .catch((error) => {
@@ -126,8 +138,9 @@ export function Timer({
                         );
                         toast({
                             title: 'Error',
-                            description: 'Failed to update cats happiness.',
-                            duration: 3000,
+                            description:
+                                error.message ||
+                                'Failed to update cats happiness.',
                         });
                     });
             }

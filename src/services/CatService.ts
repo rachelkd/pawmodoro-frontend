@@ -32,28 +32,12 @@ interface CatStatsResponse {
 }
 
 /**
- * The percentage by which cats' happiness increases after a study session
+ * Interface for the update cats after study response
  */
-export const STUDY_SESSION_HAPPINESS_INCREASE = 5;
-
-/**
- * Updates the happiness level of all cats after completing a study session
- * @param username - The username of the cat owner
- * @param cats - The list of cats to update
- * @returns Promise that resolves when all cats are updated
- * @throws Error if any update fails
- */
-export const updateAllCatsHappinessAfterStudy = async (
-    username: string,
-    cats: ReadonlyArray<Cat>
-): Promise<void> => {
-    const updatePromises = cats.map(cat => {
-        const changeAmount = Math.round((cat.happinessLevel * STUDY_SESSION_HAPPINESS_INCREASE) / 100);
-        return updateCatHappiness(username, cat.name, changeAmount);
-    });
-
-    await Promise.all(updatePromises);
-};
+interface UpdateCatsAfterStudyResponse {
+    updatedCats: Array<Cat>;
+    failures: Array<string>;
+}
 
 /**
  * Fetches all cats for a given user
@@ -189,6 +173,27 @@ export const updateCatHunger = async (
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to update cat hunger');
+    }
+
+    return response.json();
+};
+
+/**
+ * Updates the happiness level of all cats after completing a study session
+ * @returns Promise containing the updated cats and any failures
+ * @throws Error if the update fails
+ */
+export const updateAllCatsHappinessAfterStudy = async (): Promise<UpdateCatsAfterStudyResponse> => {
+    const response = await fetch(`${API_URL}/api/cats/update-after-study`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
+        },
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update cats after study');
     }
 
     return response.json();
