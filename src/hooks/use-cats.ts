@@ -18,7 +18,7 @@ interface UseCatsReturn {
     deleteCatByName: (catName: string) => Promise<void>;
     refreshCats: () => Promise<void>;
     updateAllCatsHappinessAfterStudy: () => Promise<{ updatedCats: Array<Cat>; failures: Array<string> }>;
-    decreaseCatStatsOnSkip: () => Promise<{ updatedCat: Cat | null; isDeleted: boolean; message: string }>;
+    decreaseCatStatsOnSkip: () => Promise<{ updatedCat: Cat | null; isDeleted: boolean; message: string } | undefined>;
 }
 
 export function useCats(): UseCatsReturn {
@@ -50,7 +50,6 @@ export function useCats(): UseCatsReturn {
                         await refreshTokens();
                         const response = await CatService.fetchUserCats(user.username);
                         setCats(response.cats);
-                        return;
                     } catch (refreshError) {
                         throw CatError.invalidTokenError(refreshError as Error);
                     }
@@ -75,14 +74,13 @@ export function useCats(): UseCatsReturn {
                 }
 
                 await CatService.deleteCat(user.username, catName);
-                await loadCats();
             } catch (err) {
                 throw new CatError('Failed to delete cat', { cause: err as Error });
             } finally {
                 setIsLoading(false);
             }
         },
-        [user, loadCats, refreshTokens, needsTokenRefresh]
+        [user, refreshTokens, needsTokenRefresh]
     );
 
     const updateAllCatsHappinessAfterStudy = useCallback(async () => {
@@ -97,18 +95,17 @@ export function useCats(): UseCatsReturn {
             }
 
             const result = await CatService.updateAllCatsHappinessAfterStudy();
-            await loadCats(); // Refresh cats after update
             return result;
         } catch (err) {
             throw new CatError('Failed to update cats after study', { cause: err as Error });
         } finally {
             setIsLoading(false);
         }
-    }, [user?.accessToken, needsTokenRefresh, refreshTokens, loadCats]);
+    }, [user?.accessToken, needsTokenRefresh, refreshTokens]);
 
     const decreaseCatStatsOnSkip = useCallback(async () => {
         if (!user?.accessToken) {
-            throw CatError.authError();
+            return;
         }
 
         setIsLoading(true);
@@ -118,14 +115,13 @@ export function useCats(): UseCatsReturn {
             }
 
             const result = await CatService.decreaseCatStatsOnSkip();
-            await loadCats(); // Refresh cats after update
             return result;
         } catch (err) {
             throw new CatError('Failed to decrease cat stats', { cause: err as Error });
         } finally {
             setIsLoading(false);
         }
-    }, [user?.accessToken, needsTokenRefresh, refreshTokens, loadCats]);
+    }, [user?.accessToken, needsTokenRefresh, refreshTokens]);
 
     useEffect(() => {
         loadCats().catch(() => {
