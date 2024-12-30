@@ -40,7 +40,15 @@ export default function Home() {
         setTimeLeft,
         initialTime,
         setInitialTime,
-    } = useTimer();
+    } = useTimer({
+        onSkipPenalty: (message) => {
+            toast({
+                title: 'Focus session skipped',
+                description: message,
+                variant: 'destructive',
+            });
+        },
+    });
     const { settings } = useSettingsContext();
 
     useEffect(() => {

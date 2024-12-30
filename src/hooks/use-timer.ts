@@ -4,7 +4,11 @@ import { TIMER_CONSTANTS } from '@/constants/storage';
 import { useCats } from '@/hooks/use-cats';
 import { useCatContext } from '@/contexts/CatContext';
 
-export function useTimer() {
+interface UseTimerProps {
+    onSkipPenalty?: (message: string) => void;
+}
+
+export function useTimer({ onSkipPenalty }: UseTimerProps = {}) {
     const [currentSession, setCurrentSession] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isAutoChange, setIsAutoChange] = useState(false);
@@ -31,27 +35,25 @@ export function useTimer() {
             setCurrentSession(prev => (prev + 1) % 4);
         }, 0);
         
-        // Only check for skip penalty during focus sessions
+        // Only check for skip penalty during focus sessions and non-auto skips
         if (timerType === 'focus' && timeLeft !== null && initialTime !== null && !auto) {
             const timeElapsed = initialTime - timeLeft;
             
-            // Check if we should penalize the skip
-            if (timeElapsed > TIMER_CONSTANTS.MIN_ELAPSED_TIME_FOR_SKIP_PENALTY && 
-                timeLeft > TIMER_CONSTANTS.MIN_TIME_LEFT_FOR_SKIP_PENALTY) {
+            // Check if we should penalize the skip based on elapsed time and time left
+            if (timeElapsed >= TIMER_CONSTANTS.MIN_ELAPSED_TIME_FOR_SKIP_PENALTY && 
+                timeLeft >= TIMER_CONSTANTS.MIN_TIME_LEFT_FOR_SKIP_PENALTY) {
                 try {
-                    console.log("Penalizing skip");
                     const result = await decreaseCatStatsOnSkip();
-                    if (result?.updatedCats) {
-                        // Make sure to refresh the cats in the context
+                    if (result) {
                         await refreshCats();
-                        console.log("Updated cats after skip penalty:", result.updatedCats);
+                        onSkipPenalty?.(result.message);
                     }
                 } catch (error) {
                     console.error('Failed to decrease cat stats on skip:', error);
                 }
             }
         }
-    }, [timeLeft, initialTime, getTimerType, decreaseCatStatsOnSkip, refreshCats]);
+    }, [timeLeft, initialTime, getTimerType, decreaseCatStatsOnSkip, refreshCats, onSkipPenalty]);
 
     const handlePrevious = useCallback(() => {
         setIsPlaying(false);
