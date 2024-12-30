@@ -36,6 +36,10 @@ export default function Home() {
         handlePrevious,
         setIsPlaying,
         isAutoChange,
+        timeLeft,
+        setTimeLeft,
+        initialTime,
+        setInitialTime,
     } = useTimer();
     const { settings } = useSettingsContext();
 
@@ -156,6 +160,10 @@ export default function Home() {
                             timerType={timerType}
                             onComplete={handleTimerComplete}
                             onAdoptClick={() => setIsAdoptionOpen(true)}
+                            timeLeft={timeLeft}
+                            setTimeLeft={setTimeLeft}
+                            initialTime={initialTime}
+                            setInitialTime={setInitialTime}
                         />
                         <SessionIndicator currentSession={currentSession} />
                         <Controls

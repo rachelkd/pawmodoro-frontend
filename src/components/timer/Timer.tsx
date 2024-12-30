@@ -14,6 +14,12 @@ interface TimerProps {
     readonly timerType: TimerType;
     readonly onComplete?: () => void;
     readonly onAdoptClick?: () => void;
+    readonly timeLeft: number | null;
+    readonly setTimeLeft: React.Dispatch<React.SetStateAction<number | null>>;
+    readonly initialTime: number | null;
+    readonly setInitialTime: React.Dispatch<
+        React.SetStateAction<number | null>
+    >;
 }
 
 /**
@@ -25,12 +31,14 @@ export function Timer({
     timerType,
     onComplete,
     onAdoptClick,
+    timeLeft,
+    setTimeLeft,
+    setInitialTime,
 }: Readonly<TimerProps>) {
     const { settings } = useSettingsContext();
     const { toast } = useToast();
     const { refreshCats } = useCatContext();
     const { updateAllCatsHappinessAfterStudy } = useCats();
-    const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [isCompleting, setIsCompleting] = useState(false);
     const previousTimerType = useRef(timerType);
 
@@ -49,7 +57,9 @@ export function Timer({
 
     // Only reset timer when timer type changes
     useEffect(() => {
-        setTimeLeft(getInitialTime());
+        const newInitialTime = getInitialTime();
+        setTimeLeft(newInitialTime);
+        setInitialTime(newInitialTime);
         setIsCompleting(false);
 
         // Only show toast if timer type changed
@@ -86,7 +96,7 @@ export function Timer({
             title: getSessionName(timerType),
             description: getSessionDescription(timerType),
         });
-    }, [getInitialTime, timerType, toast]);
+    }, [getInitialTime, timerType, toast, setInitialTime, setTimeLeft]);
 
     // Handle countdown timer
     useEffect(() => {
@@ -101,7 +111,7 @@ export function Timer({
         }
 
         return () => clearInterval(intervalId);
-    }, [isPlaying, timeLeft]);
+    }, [isPlaying, timeLeft, setTimeLeft]);
 
     // Handle both completion and auto-start
     useEffect(() => {
