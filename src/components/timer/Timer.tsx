@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCatContext } from '@/contexts/CatContext';
 import { useCats } from '@/hooks/use-cats';
 import { ToastAction } from '@/components/ui/toast';
+import { useSessionContext } from '@/contexts/SessionContext';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -41,11 +42,13 @@ export function Timer({
     const { updateAllCatsHappinessAfterStudy } = useCats();
     const [isCompleting, setIsCompleting] = useState(false);
     const previousTimerType = useRef(timerType);
+    const { completeCurrentSession } = useSessionContext();
 
     const getInitialTime = useCallback(() => {
         switch (timerType) {
             case 'focus':
-                return settings.focusDuration * 60;
+                // return settings.focusDuration * 60;
+                return 3;
             case 'shortBreak':
                 return settings.shortBreakDuration * 60;
             case 'longBreak':
@@ -55,7 +58,7 @@ export function Timer({
         }
     }, [timerType, settings]);
 
-    // Only reset timer when timer type changes
+    // Start new session when timer type changes
     useEffect(() => {
         const newInitialTime = getInitialTime();
         setTimeLeft(newInitialTime);
@@ -118,6 +121,9 @@ export function Timer({
     useEffect(() => {
         if (timeLeft === 0 && !isCompleting) {
             setIsCompleting(true);
+
+            // Complete the current session
+            completeCurrentSession().catch(console.error);
 
             // Only update cats' happiness after focus sessions
             if (timerType === 'focus') {
@@ -184,6 +190,7 @@ export function Timer({
         toast,
         updateAllCatsHappinessAfterStudy,
         onAdoptClick,
+        completeCurrentSession,
     ]);
 
     if (timeLeft === null) {

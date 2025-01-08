@@ -3,6 +3,7 @@ import { TimerType } from '@/components/timer/Timer';
 import { TIMER_CONSTANTS } from '@/constants/storage';
 import { useCats } from '@/hooks/use-cats';
 import { useCatContext } from '@/contexts/CatContext';
+import { useSessionContext } from '@/contexts/SessionContext';
 
 interface UseTimerProps {
     onSkipPenalty?: (message: string) => void;
@@ -16,6 +17,7 @@ export function useTimer({ onSkipPenalty }: UseTimerProps = {}) {
     const [initialTime, setInitialTime] = useState<number | null>(null);
     const { decreaseCatStatsOnSkip } = useCats();
     const { refreshCats } = useCatContext();
+    const { startNewSession } = useSessionContext();
 
     const getTimerType = useCallback((): TimerType => {
         if (currentSession === 3) return 'longBreak';
@@ -53,7 +55,14 @@ export function useTimer({ onSkipPenalty }: UseTimerProps = {}) {
                 }
             }
         }
-    }, [timeLeft, initialTime, getTimerType, decreaseCatStatsOnSkip, refreshCats, onSkipPenalty]);
+        // TODO: Fix bug where timeLeft is null/0 when session advances
+        console.log('timeLeft', timeLeft);
+        if (timeLeft) {
+            await startNewSession(timerType, Math.ceil(timeLeft / 60)).catch(
+                console.error
+            );
+        }
+    }, [timeLeft, initialTime, getTimerType, decreaseCatStatsOnSkip, refreshCats, onSkipPenalty, startNewSession]);
 
     const handlePrevious = useCallback(() => {
         setIsPlaying(false);

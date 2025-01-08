@@ -83,7 +83,9 @@ export default function Home() {
      * For break sessions:
      * - Advances to next session immediately
      */
-    const handleTimerComplete = () => {
+    const handleTimerComplete = async () => {
+        // TODO: Fix bug where if auto-start is enabled, when the session changes, it does not create new session.
+
         if (timerType === 'focus') {
             if (user && cats.length > 0) {
                 // For users with cats: advance immediately
@@ -179,6 +181,8 @@ export default function Home() {
                             onPlayPause={handlePlayPause}
                             onNext={handleNext}
                             onPrevious={handlePrevious}
+                            timerType={timerType}
+                            timeLeft={timeLeft}
                         />
                     </div>
                 </div>
