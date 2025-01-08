@@ -1,106 +1,45 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useSettingsContext } from '@/contexts/SettingsContext';
+import { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useCatContext } from '@/contexts/CatContext';
 import { useCats } from '@/hooks/use-cats';
 import { ToastAction } from '@/components/ui/toast';
 import { useSessionContext } from '@/contexts/SessionContext';
+import { useTimerContext } from '@/contexts/TimerContext';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
 interface TimerProps {
-    readonly isPlaying: boolean;
-    readonly timerType: TimerType;
     readonly onComplete?: () => void;
     readonly onAdoptClick?: () => void;
-    readonly timeLeft: number | null;
-    readonly setTimeLeft: React.Dispatch<React.SetStateAction<number | null>>;
-    readonly initialTime: number | null;
-    readonly setInitialTime: React.Dispatch<
-        React.SetStateAction<number | null>
-    >;
 }
 
 /**
  * Timer component that displays and manages a countdown timer for focus and break sessions.
  * Supports auto-start functionality based on user settings.
  */
-export function Timer({
-    isPlaying,
-    timerType,
-    onComplete,
-    onAdoptClick,
-    timeLeft,
-    setTimeLeft,
-    setInitialTime,
-}: Readonly<TimerProps>) {
-    const { settings } = useSettingsContext();
+export function Timer({ onComplete, onAdoptClick }: Readonly<TimerProps>) {
     const { toast } = useToast();
     const { refreshCats } = useCatContext();
     const { updateAllCatsHappinessAfterStudy } = useCats();
     const [isCompleting, setIsCompleting] = useState(false);
+    const { completeCurrentSession, currentSession } = useSessionContext();
+    const {
+        isPlaying,
+        timerType,
+        timeLeft,
+        setTimeLeft,
+        handleNext,
+        setIsPlaying,
+    } = useTimerContext();
     const previousTimerType = useRef(timerType);
-    const { completeCurrentSession } = useSessionContext();
 
-    const getInitialTime = useCallback(() => {
-        switch (timerType) {
-            case 'focus':
-                // return settings.focusDuration * 60;
-                return 3;
-            case 'shortBreak':
-                return settings.shortBreakDuration * 60;
-            case 'longBreak':
-                return settings.longBreakDuration * 60;
-            default:
-                return settings.focusDuration * 60;
-        }
-    }, [timerType, settings]);
-
-    // Start new session when timer type changes
+    // Reset isCompleting when timer type changes
     useEffect(() => {
-        const newInitialTime = getInitialTime();
-        setTimeLeft(newInitialTime);
-        setInitialTime(newInitialTime);
+        console.log('Timer type changed, resetting isCompleting');
         setIsCompleting(false);
-
-        // Only show toast if timer type changed
-        if (previousTimerType.current === timerType) {
-            return;
-        }
-
-        // Update previous timer type before showing toast
-        previousTimerType.current = timerType;
-
-        const getSessionName = (type: TimerType): string => {
-            switch (type) {
-                case 'focus':
-                    return 'Focus Session';
-                case 'shortBreak':
-                    return 'Short Break';
-                case 'longBreak':
-                    return 'Long Break';
-            }
-        };
-
-        const getSessionDescription = (type: TimerType): string => {
-            switch (type) {
-                case 'focus':
-                    return 'Time to focus.';
-                case 'shortBreak':
-                    return 'Time to take a break!';
-                case 'longBreak':
-                    return 'Congrats on completing your focus session! You deserve a long break.';
-            }
-        };
-
-        toast({
-            title: getSessionName(timerType),
-            description: getSessionDescription(timerType),
-            duration: 3000,
-        });
-    }, [getInitialTime, timerType, toast, setInitialTime, setTimeLeft]);
+    }, [timerType]);
 
     // Handle countdown timer
     useEffect(() => {
@@ -119,16 +58,35 @@ export function Timer({
 
     // Handle both completion and auto-start
     useEffect(() => {
-        if (timeLeft === 0 && !isCompleting) {
-            setIsCompleting(true);
+        console.log('Timer effect running:', {
+            timeLeft,
+            isCompleting,
+            timerType,
+        });
 
-            // Complete the current session
-            completeCurrentSession().catch(console.error);
+        let isSubscribed = true;
 
-            // Only update cats' happiness after focus sessions
-            if (timerType === 'focus') {
-                updateAllCatsHappinessAfterStudy()
-                    .then((result) => {
+        const handleCompletion = async () => {
+            try {
+                console.log('Starting completion flow');
+                setIsCompleting(true);
+
+                // Only try to complete session in backend for focus sessions or if there's an active session
+                if (timerType === 'focus' || currentSession) {
+                    console.log('Attempting to complete session in backend');
+                    await completeCurrentSession();
+                    console.log('Session completed in backend');
+                } else {
+                    console.log(
+                        'Skipping backend completion for break without active session'
+                    );
+                }
+
+                if (timerType === 'focus') {
+                    console.log('Updating cat happiness for focus session');
+                    try {
+                        const result = await updateAllCatsHappinessAfterStudy();
+                        console.log('Cat happiness updated:', result);
                         refreshCats();
 
                         // Show success message with count of updated cats
@@ -164,8 +122,7 @@ export function Timer({
                                 </ToastAction>
                             ),
                         });
-                    })
-                    .catch((error) => {
+                    } catch (error) {
                         console.error(
                             'Failed to update cats happiness:',
                             error
@@ -173,14 +130,41 @@ export function Timer({
                         toast({
                             title: 'Error',
                             description:
-                                error.message ||
-                                'Failed to update cats happiness.',
+                                error instanceof Error
+                                    ? error.message
+                                    : 'Failed to update cats happiness.',
                         });
-                    });
-            }
+                    }
+                }
 
-            onComplete?.();
+                console.log('Calling onComplete callback');
+                onComplete?.();
+
+                console.log('Stopping timer and advancing to next session');
+                setIsPlaying(false);
+                handleNext(true);
+            } catch (error) {
+                console.error('Error in completion flow:', error);
+                // Even if completion fails, we should still advance
+                console.log('Advancing session despite error');
+                setIsPlaying(false);
+                handleNext(true);
+            } finally {
+                if (isSubscribed) {
+                    console.log('Resetting isCompleting');
+                    setIsCompleting(false);
+                }
+            }
+        };
+
+        if (timeLeft === 0 && !isCompleting) {
+            handleCompletion();
         }
+
+        return () => {
+            console.log('Cleanup: unsubscribing timer effect');
+            isSubscribed = false;
+        };
     }, [
         timeLeft,
         onComplete,
@@ -191,7 +175,49 @@ export function Timer({
         updateAllCatsHappinessAfterStudy,
         onAdoptClick,
         completeCurrentSession,
+        handleNext,
+        setIsPlaying,
+        currentSession,
     ]);
+
+    // Show session change toast
+    useEffect(() => {
+        // Only show toast if timer type changed
+        if (previousTimerType.current === timerType) {
+            return;
+        }
+
+        // Update previous timer type before showing toast
+        previousTimerType.current = timerType;
+
+        const getSessionName = (type: TimerType): string => {
+            switch (type) {
+                case 'focus':
+                    return 'Focus Session';
+                case 'shortBreak':
+                    return 'Short Break';
+                case 'longBreak':
+                    return 'Long Break';
+            }
+        };
+
+        const getSessionDescription = (type: TimerType): string => {
+            switch (type) {
+                case 'focus':
+                    return 'Time to focus.';
+                case 'shortBreak':
+                    return 'Time to take a break!';
+                case 'longBreak':
+                    return 'Congrats on completing your focus session! You deserve a long break.';
+            }
+        };
+
+        toast({
+            title: getSessionName(timerType),
+            description: getSessionDescription(timerType),
+            duration: 3000,
+        });
+    }, [timerType, toast]);
 
     if (timeLeft === null) {
         return <TimerDisplay minutes='--' seconds='--' />;

@@ -3,49 +3,44 @@
 import { Button } from '@/components/ui/button';
 import { SkipBack, Play, Pause, SkipForward } from 'lucide-react';
 import { useSessionContext } from '@/contexts/SessionContext';
-import { TimerType } from './Timer';
+import { useTimerContext } from '@/contexts/TimerContext';
 
-interface ControlsProps {
-    readonly onPrevious?: () => void;
-    readonly onPlayPause?: () => void;
-    readonly onNext?: (auto?: boolean) => void;
-    readonly isPlaying?: boolean;
-    readonly timerType: TimerType;
-    readonly timeLeft: number | null;
-}
-
-export function Controls({
-    onPrevious,
-    onPlayPause,
-    onNext,
-    isPlaying = false,
-    timerType,
-    timeLeft,
-}: ControlsProps) {
+export function Controls() {
     const {
         updateSessionInterruption,
         cancelCurrentSession,
         startNewSession,
-        currentSession,
+        currentSession: backendSession,
     } = useSessionContext();
 
-    const handlePlayPause = async () => {
-        if (isPlaying) {
-            // If we're pausing, update the interruption count
+    const {
+        isPlaying,
+        timerType,
+        timeLeft,
+        handlePlayPause,
+        handleNext,
+        handlePrevious,
+    } = useTimerContext();
+
+    const handlePlayPauseClick = async () => {
+        if (isPlaying && timeLeft && timeLeft > 0) {
+            // Only update interruption if we're pausing and timer is still running
             await updateSessionInterruption().catch(console.error);
-        } else if (!currentSession && timeLeft) {
+        } else if (!isPlaying && !backendSession && timeLeft) {
             // If we're starting and there's no current session, create one
             await startNewSession(timerType, Math.ceil(timeLeft / 60)).catch(
                 console.error
             );
         }
-        onPlayPause?.();
+        handlePlayPause();
     };
 
-    const handleNext = async () => {
+    const handleNextClick = async () => {
         // If skipping manually, cancel the current session
-        await cancelCurrentSession().catch(console.error);
-        onNext?.(false);
+        if (backendSession) {
+            await cancelCurrentSession().catch(console.error);
+        }
+        handleNext(false);
     };
 
     return (
@@ -54,7 +49,7 @@ export function Controls({
                 variant='ghost'
                 size='icon'
                 className='bg-white/20 text-white rounded-full w-12 h-12'
-                onClick={onPrevious}
+                onClick={handlePrevious}
             >
                 <SkipBack className='h-5 w-5' fill='currentColor' />
             </Button>
@@ -62,7 +57,7 @@ export function Controls({
                 variant='ghost'
                 size='icon'
                 className='bg-white/20 text-white rounded-full w-12 h-12'
-                onClick={handlePlayPause}
+                onClick={handlePlayPauseClick}
             >
                 {isPlaying ? (
                     <Pause className='h-5 w-5' fill='currentColor' />
@@ -74,7 +69,7 @@ export function Controls({
                 variant='ghost'
                 size='icon'
                 className='bg-white/20 text-white rounded-full w-12 h-12'
-                onClick={handleNext}
+                onClick={handleNextClick}
             >
                 <SkipForward className='h-5 w-5' fill='currentColor' />
             </Button>

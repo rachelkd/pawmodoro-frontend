@@ -8,13 +8,12 @@ import { Controls } from '@/components/timer/Controls';
 import { Footer } from '@/components/timer/Footer';
 import { CatAdoptionDialog } from '@/components/ui/custom/popover/CatAdoptionDialog';
 import { CatContainer } from '@/components/cats/CatContainer';
-import { useTimer } from '@/hooks/use-timer';
-import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useCatContext } from '@/contexts/CatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
+import { useTimerContext } from '@/contexts/TimerContext';
 
 export default function Home() {
     const [mounted, setMounted] = useState(false);
@@ -26,30 +25,8 @@ export default function Home() {
     const { user } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
-
-    const {
-        isPlaying,
-        timerType,
-        currentSession,
-        handlePlayPause,
-        handleNext,
-        handlePrevious,
-        setIsPlaying,
-        isAutoChange,
-        timeLeft,
-        setTimeLeft,
-        initialTime,
-        setInitialTime,
-    } = useTimer({
-        onSkipPenalty: (message) => {
-            toast({
-                title: 'Focus session skipped',
-                description: message,
-                variant: 'destructive',
-            });
-        },
-    });
-    const { settings } = useSettingsContext();
+    const { isPlaying, timerType, handleNext, currentSession } =
+        useTimerContext();
 
     useEffect(() => {
         setMounted(true);
@@ -84,18 +61,13 @@ export default function Home() {
      * - Advances to next session immediately
      */
     const handleTimerComplete = async () => {
-        // TODO: Fix bug where if auto-start is enabled, when the session changes, it does not create new session.
-
         if (timerType === 'focus') {
-            if (user && cats.length > 0) {
-                // For users with cats: advance immediately
-                handleNext(true);
-            } else if (user) {
+            if (user && cats.length === 0) {
                 // For new users: show dialog and advance after it closes
                 setIsPostSession(true);
                 setIsAdoptionOpen(true);
-            } else {
-                // For non-logged in users: show signup toast and advance
+            } else if (!user) {
+                // For non-logged in users: show signup toast
                 toast({
                     title: 'Great work!',
                     description:
@@ -109,11 +81,7 @@ export default function Home() {
                         </ToastAction>
                     ),
                 });
-                handleNext(true);
             }
-        } else {
-            // For break sessions: advance immediately
-            handleNext(true);
         }
     };
 
@@ -128,34 +96,12 @@ export default function Home() {
      */
     const handleAdoptionDialogClose = (open: boolean) => {
         setIsAdoptionOpen(open);
+        // TODO: Check if timer waits for dialog to close before advancing
         if (!open && timerType === 'focus' && isPostSession) {
             handleNext(true);
             setIsPostSession(false);
         }
     };
-
-    useEffect(() => {
-        if (!mounted || !isAutoChange) return;
-
-        const shouldAutoStart =
-            timerType === 'focus'
-                ? settings.autoStartFocus
-                : settings.autoStartBreaks;
-
-        // Delay the auto-start for 1.5 seconds
-        if (shouldAutoStart) {
-            setTimeout(() => {
-                setIsPlaying(true);
-            }, 1500);
-        }
-    }, [
-        mounted,
-        timerType,
-        settings.autoStartFocus,
-        settings.autoStartBreaks,
-        setIsPlaying,
-        isAutoChange,
-    ]);
 
     if (!mounted) return null;
 
@@ -166,24 +112,11 @@ export default function Home() {
                 <div className='flex-1 flex items-center justify-center w-full'>
                     <div className='flex flex-col items-center justify-center gap-6'>
                         <Timer
-                            isPlaying={isPlaying}
-                            timerType={timerType}
                             onComplete={handleTimerComplete}
                             onAdoptClick={() => setIsAdoptionOpen(true)}
-                            timeLeft={timeLeft}
-                            setTimeLeft={setTimeLeft}
-                            initialTime={initialTime}
-                            setInitialTime={setInitialTime}
                         />
                         <SessionIndicator currentSession={currentSession} />
-                        <Controls
-                            isPlaying={isPlaying}
-                            onPlayPause={handlePlayPause}
-                            onNext={handleNext}
-                            onPrevious={handlePrevious}
-                            timerType={timerType}
-                            timeLeft={timeLeft}
-                        />
+                        <Controls />
                     </div>
                 </div>
                 <div className='w-full flex flex-col items-center'>
