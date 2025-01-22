@@ -11,7 +11,11 @@ export const useSession = () => {
 
     const startSession = useCallback(
         async (sessionType: Session['sessionType'], durationMinutes: number) => {
-            if (!user?.accessToken) {
+            if (!user) {
+                return;
+            }
+            
+            if (!user.accessToken) {
                 throw new Error('No access token available');
             }
 
@@ -30,7 +34,7 @@ export const useSession = () => {
                 setIsLoading(false);
             }
         },
-        [sessionService, user?.accessToken]
+        [sessionService, user]
     );
 
     const completeSession = useCallback(async () => {

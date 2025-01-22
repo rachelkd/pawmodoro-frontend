@@ -86,12 +86,12 @@ export function Timer({ onComplete, onAdoptClick }: Readonly<TimerProps>) {
                     console.log('Updating cat happiness for focus session');
                     try {
                         const result = await updateAllCatsHappinessAfterStudy();
-                        console.log('Cat happiness updated:', result);
+
                         refreshCats();
 
                         // Show success message with count of updated cats
-                        const updatedCount = result.updatedCats.length;
-                        const failureCount = result.failures.length;
+                        const updatedCount = result?.updatedCats.length ?? 0;
+                        const failureCount = result?.failures.length ?? 0;
 
                         let description = '';
                         if (updatedCount > 0) {
@@ -137,10 +137,8 @@ export function Timer({ onComplete, onAdoptClick }: Readonly<TimerProps>) {
                     }
                 }
 
-                console.log('Calling onComplete callback');
                 onComplete?.();
 
-                console.log('Stopping timer and advancing to next session');
                 setIsPlaying(false);
                 handleNext(true);
             } catch (error) {

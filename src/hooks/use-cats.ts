@@ -17,7 +17,7 @@ interface UseCatsReturn {
     readonly isLoading: boolean;
     deleteCatByName: (catName: string) => Promise<void>;
     refreshCats: () => Promise<void>;
-    updateAllCatsHappinessAfterStudy: () => Promise<{ updatedCats: Array<Cat>; failures: Array<string> }>;
+    updateAllCatsHappinessAfterStudy: () => Promise<{ updatedCats: Array<Cat>; failures: Array<string> } | undefined>;
     decreaseCatStatsOnSkip: () => Promise<{ updatedCat: Cat | null; isDeleted: boolean; message: string } | undefined>;
 }
 
@@ -84,6 +84,9 @@ export function useCats(): UseCatsReturn {
     );
 
     const updateAllCatsHappinessAfterStudy = useCallback(async () => {
+        if (!user) {
+            return
+        }
         if (!user?.accessToken) {
             throw CatError.authError();
         }
@@ -101,7 +104,7 @@ export function useCats(): UseCatsReturn {
         } finally {
             setIsLoading(false);
         }
-    }, [user?.accessToken, needsTokenRefresh, refreshTokens]);
+    }, [user, needsTokenRefresh, refreshTokens]);
 
     const decreaseCatStatsOnSkip = useCallback(async () => {
         if (!user?.accessToken) {
