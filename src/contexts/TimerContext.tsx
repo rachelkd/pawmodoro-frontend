@@ -25,12 +25,14 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         timerType,
         timeLeft,
         initialTime,
+        wasManuallyPaused,
         handlePlayPause: baseHandlePlayPause,
         handleNext: baseHandleNext,
         handlePrevious,
         setIsPlaying,
         setTimeLeft,
         setInitialTime,
+        setWasManuallyPaused,
     } = useTimer();
 
     const { settings } = useSettingsContext();
@@ -65,14 +67,13 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
     // Handle auto-start functionality
     useEffect(() => {
-        if (!mounted || !isAutoChange) return;
+        // Don't auto-start if the timer was manually paused
+        if (!mounted || !isAutoChange || wasManuallyPaused) return;
 
         const shouldAutoStart =
             timerType === 'focus'
                 ? settings.autoStartFocus
                 : settings.autoStartBreaks;
-
-        console.log('Auto-start check:', { shouldAutoStart, timerType });
 
         if (shouldAutoStart && timeLeft) {
             // Delay the auto-start for 1.5 seconds
@@ -97,6 +98,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         timeLeft,
         startNewSession,
         setIsPlaying,
+        wasManuallyPaused,
     ]);
 
     // Wrap handleNext to add cat-related functionality
@@ -159,12 +161,14 @@ export function TimerProvider({ children }: { children: ReactNode }) {
             timerType,
             timeLeft,
             initialTime,
+            wasManuallyPaused,
             handlePlayPause: baseHandlePlayPause,
             handleNext,
             handlePrevious,
             setIsPlaying,
             setTimeLeft,
             setInitialTime,
+            setWasManuallyPaused,
         }),
         [
             currentSession,
@@ -173,12 +177,14 @@ export function TimerProvider({ children }: { children: ReactNode }) {
             timerType,
             timeLeft,
             initialTime,
+            wasManuallyPaused,
             baseHandlePlayPause,
             handleNext,
             handlePrevious,
             setIsPlaying,
             setTimeLeft,
             setInitialTime,
+            setWasManuallyPaused,
         ]
     );
 

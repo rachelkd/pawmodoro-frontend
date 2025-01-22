@@ -20,17 +20,22 @@ export function Controls() {
         handlePlayPause,
         handleNext,
         handlePrevious,
+        setWasManuallyPaused,
     } = useTimerContext();
 
     const handlePlayPauseClick = async () => {
         if (isPlaying && timeLeft && timeLeft > 0) {
             // Only update interruption if we're pausing and timer is still running
             await updateSessionInterruption().catch(console.error);
+            // Set wasManuallyPaused to true when pausing
+            setWasManuallyPaused(true);
         } else if (!isPlaying && !backendSession && timeLeft) {
             // If we're starting and there's no current session, create one
             await startNewSession(timerType, Math.ceil(timeLeft / 60)).catch(
                 console.error
             );
+            // Reset wasManuallyPaused when starting
+            setWasManuallyPaused(false);
         }
         handlePlayPause();
     };
