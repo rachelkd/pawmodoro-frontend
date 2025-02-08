@@ -64,9 +64,13 @@ export default function Home() {
         if (timerType === 'focus') {
             if (user && cats.length === 0) {
                 // For new users: show dialog and advance after it closes
+                // TODO: Fix bug where toast is shown and dialog auto opens
+                // TODO: Fix bug where deleting a cat doesn't refresh the cat list
                 setIsPostSession(true);
                 setIsAdoptionOpen(true);
             } else if (!user) {
+                console.log('User is not logged in');
+                // FIXME: Fix bug where a non logged in user skips two sessions?
                 // For non-logged in users: show signup toast
                 toast({
                     title: 'Great work!',
@@ -96,7 +100,7 @@ export default function Home() {
      */
     const handleAdoptionDialogClose = (open: boolean) => {
         setIsAdoptionOpen(open);
-        // TODO: Check if timer waits for dialog to close before advancing
+        // TODO: Fix timer to wait for dialog to close before advancing
         if (!open && timerType === 'focus' && isPostSession) {
             handleNext(true);
             setIsPostSession(false);

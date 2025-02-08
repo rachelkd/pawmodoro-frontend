@@ -7,6 +7,7 @@ import { useCats } from '@/hooks/use-cats';
 import { ToastAction } from '@/components/ui/toast';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { useTimerContext } from '@/contexts/TimerContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type TimerType = 'focus' | 'shortBreak' | 'longBreak';
 
@@ -23,6 +24,7 @@ export function Timer({ onComplete, onAdoptClick }: Readonly<TimerProps>) {
     const { toast } = useToast();
     const { refreshCats } = useCatContext();
     const { updateAllCatsHappinessAfterStudy } = useCats();
+    const { user } = useAuth();
     const [isCompleting, setIsCompleting] = useState(false);
     const { completeCurrentSession, currentSession } = useSessionContext();
     const {
@@ -57,71 +59,61 @@ export function Timer({ onComplete, onAdoptClick }: Readonly<TimerProps>) {
     }, [isPlaying, timeLeft, setTimeLeft]);
 
     // Handle both completion and auto-start
+    // FIXME: Fix bug where logged out users skip two sessions
     useEffect(() => {
-        console.log('Timer effect running:', {
-            timeLeft,
-            isCompleting,
-            timerType,
-        });
-
         let isSubscribed = true;
 
         const handleCompletion = async () => {
             try {
-                console.log('Starting completion flow');
                 setIsCompleting(true);
 
                 // Only try to complete session in backend for focus sessions or if there's an active session
                 if (timerType === 'focus' || currentSession) {
-                    console.log('Attempting to complete session in backend');
                     await completeCurrentSession();
-                    console.log('Session completed in backend');
-                } else {
-                    console.log(
-                        'Skipping backend completion for break without active session'
-                    );
                 }
 
                 if (timerType === 'focus') {
-                    console.log('Updating cat happiness for focus session');
                     try {
                         const result = await updateAllCatsHappinessAfterStudy();
 
                         refreshCats();
 
-                        // Show success message with count of updated cats
-                        const updatedCount = result?.updatedCats.length ?? 0;
-                        const failureCount = result?.failures.length ?? 0;
+                        if (user) {
+                            // Show success message with count of updated cats
+                            const updatedCount =
+                                result?.updatedCats.length ?? 0;
+                            const failureCount = result?.failures.length ?? 0;
 
-                        let description = '';
-                        if (updatedCount > 0) {
-                            description = `${updatedCount} ${
-                                updatedCount === 1 ? 'cat is' : 'cats are'
-                            } happier!`;
-                        }
-                        if (failureCount > 0) {
+                            let description = '';
+                            if (updatedCount > 0) {
+                                description = `${updatedCount} ${
+                                    updatedCount === 1 ? 'cat is' : 'cats are'
+                                } happier!`;
+                            }
+                            if (failureCount > 0) {
+                                description += `${
+                                    description ? ' ' : ''
+                                }(${failureCount} ${
+                                    failureCount === 1 ? 'update' : 'updates'
+                                } failed)`;
+                            }
                             description += `${
-                                description ? ' ' : ''
-                            }(${failureCount} ${
-                                failureCount === 1 ? 'update' : 'updates'
-                            } failed)`;
-                        }
-                        description += `${
-                            description ? '\n' : ''
-                        }Want to adopt another cat to join your family?`;
+                                description ? '\n' : ''
+                            }Want to adopt another cat to join your family?`;
 
-                        toast({
-                            title: 'Great work!',
-                            description,
-                            action: (
-                                <ToastAction
-                                    altText='Adopt a cat'
-                                    onClick={() => onAdoptClick?.()}
-                                >
-                                    Adopt a cat
-                                </ToastAction>
-                            ),
-                        });
+                            toast({
+                                title: 'Great work!',
+                                description,
+                                action: (
+                                    <ToastAction
+                                        altText='Adopt a cat'
+                                        onClick={() => onAdoptClick?.()}
+                                    >
+                                        Adopt a cat
+                                    </ToastAction>
+                                ),
+                            });
+                        }
                     } catch (error) {
                         console.error(
                             'Failed to update cats happiness:',
@@ -138,16 +130,11 @@ export function Timer({ onComplete, onAdoptClick }: Readonly<TimerProps>) {
                 }
 
                 onComplete?.();
-
-                setIsPlaying(false);
-                handleNext(true);
             } catch (error) {
                 console.error('Error in completion flow:', error);
-                // Even if completion fails, we should still advance
-                console.log('Advancing session despite error');
+            } finally {
                 setIsPlaying(false);
                 handleNext(true);
-            } finally {
                 if (isSubscribed) {
                     console.log('Resetting isCompleting');
                     setIsCompleting(false);

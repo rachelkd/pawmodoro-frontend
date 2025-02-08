@@ -107,8 +107,11 @@ export function useCats(): UseCatsReturn {
     }, [user, needsTokenRefresh, refreshTokens]);
 
     const decreaseCatStatsOnSkip = useCallback(async () => {
+        if (!user) {
+            return
+        }
         if (!user?.accessToken) {
-            return;
+            throw CatError.authError();
         }
 
         setIsLoading(true);
@@ -124,7 +127,7 @@ export function useCats(): UseCatsReturn {
         } finally {
             setIsLoading(false);
         }
-    }, [user?.accessToken, needsTokenRefresh, refreshTokens]);
+    }, [user, needsTokenRefresh, refreshTokens]);
 
     useEffect(() => {
         loadCats().catch(() => {
